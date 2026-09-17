@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary: 37 99 235; /* #2563EB */
+    --deep-blue: 23 59 115; /* #173B73 */
+    --soft-blue: 234 242 255; /* #EAF2FF */
+    --blue-tint: 245 248 255; /* #F5F8FF */
+    --bg-main: 247 249 252; /* #F7F9FC */
+    --surface: 255 255 255; /* #FFFFFF */
+    --text-main: 23 32 51; /* #172033 */
+    --text-muted: 102 112 133; /* #667085 */
+    --border-main: 229 234 241; /* #E5EAF1 */
+  }
+
+  .dark {
+    --primary: 59 130 246; /* #3B82F6 */
+    --deep-blue: 30 64 175;
+    --soft-blue: 30 41 59;
+    --blue-tint: 15 23 42;
+    --bg-main: 11 17 32; /* #0B1120 */
+    --surface: 17 26 46; /* #111A2E */
+    --text-main: 241 245 249; /* #F1F5F9 */
+    --text-muted: 148 163 184; /* #94A3B8 */
+    --border-main: 30 47 82; /* #1E2F52 */
+  }
+
+  body {
+    background-color: #F7F9FC;
+    color: #172033;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .dark body {
+    background-color: #0A0F1D;
+    color: #F1F5F9;
+  }
+}
+
+/* Custom Healthcare Dashboard Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}

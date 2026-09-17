@@ -1,0 +1,161 @@
+from enum import Enum
+
+
+class UserRole(str, Enum):
+    SUPER_ADMIN = "SUPER_ADMIN"
+    HOSPITAL_ADMIN = "HOSPITAL_ADMIN"
+    DOCTOR = "DOCTOR"
+    NURSE = "NURSE"
+    RECEPTIONIST = "RECEPTIONIST"
+    PHARMACIST = "PHARMACIST"
+    LAB_TECHNICIAN = "LAB_TECHNICIAN"
+    ACCOUNTANT = "ACCOUNTANT"
+    PATIENT = "PATIENT"
+
+
+class SubscriptionTier(str, Enum):
+    FREE_TRIAL = "FREE_TRIAL"
+    STARTER = "STARTER"
+    GROWTH = "GROWTH"
+    ENTERPRISE = "ENTERPRISE"
+
+
+class SubscriptionStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    TRIALING = "TRIALING"
+    PAST_DUE = "PAST_DUE"
+    CANCELLED = "CANCELLED"
+    EXPIRED = "EXPIRED"
+
+
+class AppointmentStatus(str, Enum):
+    SCHEDULED = "SCHEDULED"
+    CONFIRMED = "CONFIRMED"
+    CHECKED_IN = "CHECKED_IN"
+    IN_CONSULTATION = "IN_CONSULTATION"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
+    NO_SHOW = "NO_SHOW"
+
+
+class QueueStatus(str, Enum):
+    BOOKED = "BOOKED"
+    CHECKED_IN = "CHECKED_IN"
+    WAITING = "WAITING"
+    CALLED = "CALLED"
+    IN_CONSULTATION = "IN_CONSULTATION"
+    COMPLETED = "COMPLETED"
+    SKIPPED = "SKIPPED"
+    CANCELLED = "CANCELLED"
+    NO_SHOW = "NO_SHOW"
+
+
+class EncounterType(str, Enum):
+    OPD = "OPD"
+    IPD = "IPD"
+    EMERGENCY = "EMERGENCY"
+
+
+class Gender(str, Enum):
+    MALE = "MALE"
+    FEMALE = "FEMALE"
+    OTHER = "OTHER"
+
+
+class WardType(str, Enum):
+    GENERAL = "GENERAL"
+    SEMI_PRIVATE = "SEMI_PRIVATE"
+    PRIVATE = "PRIVATE"
+    ICU = "ICU"
+    NICU = "NICU"
+    EMERGENCY = "EMERGENCY"
+    RECOVERY = "RECOVERY"
+
+
+class BedStatus(str, Enum):
+    AVAILABLE = "AVAILABLE"
+    OCCUPIED = "OCCUPIED"
+    MAINTENANCE = "MAINTENANCE"
+    RESERVED = "RESERVED"
+    CLEANING = "CLEANING"
+
+
+class AdmissionStatus(str, Enum):
+    ADMITTED = "ADMITTED"
+    TRANSFERRED = "TRANSFERRED"
+    DISCHARGED = "DISCHARGED"
+    LAMA = "LAMA"
+    DEATH = "DEATH"
+
+
+class PrescriptionStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    DISPENSED = "DISPENSED"
+    PARTIALLY_DISPENSED = "PARTIALLY_DISPENSED"
+    CANCELLED = "CANCELLED"
+
+
+class LabOrderStatus(str, Enum):
+    ORDERED = "ORDERED"
+    SAMPLE_PENDING = "SAMPLE_PENDING"
+    COLLECTED = "COLLECTED"
+    PROCESSING = "PROCESSING"
+    RESULT_ENTERED = "RESULT_ENTERED"
+    VERIFIED = "VERIFIED"
+    PUBLISHED = "PUBLISHED"
+    CANCELLED = "CANCELLED"
+
+
+class InvoiceStatus(str, Enum):
+    DRAFT = "DRAFT"
+    GENERATED = "GENERATED"
+    PARTIALLY_PAID = "PARTIALLY_PAID"
+    PAID = "PAID"
+    CANCELLED = "CANCELLED"
+    REFUNDED = "REFUNDED"
+
+
+class PaymentMethod(str, Enum):
+    CASH = "CASH"
+    UPI = "UPI"
+    CARD = "CARD"
+    BANK = "BANK"
+    ONLINE = "ONLINE"
+    INSURANCE = "INSURANCE"
+    RAZORPAY = "RAZORPAY"
+
+
+class PaymentStatus(str, Enum):
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    SUCCESSFUL = "SUCCESSFUL"
+    FAILED = "FAILED"
+    REFUNDED = "REFUNDED"
+
+
+class InvoiceItemType(str, Enum):
+    CONSULTATION = "CONSULTATION"
+    LAB = "LAB"
+    RADIOLOGY = "RADIOLOGY"
+    ROOM = "ROOM"
+    PHARMACY = "PHARMACY"
+    PROCEDURE = "PROCEDURE"
+    PACKAGE = "PACKAGE"
+    MISCELLANEOUS = "MISCELLANEOUS"
+
+
+class AuditAction(str, Enum):
+    CREATE = "CREATE"
+    READ = "READ"
+    UPDATE = "UPDATE"
+    DELETE = "DELETE"
+    EXPORT = "EXPORT"
+    LOGIN = "LOGIN"
+    LOGOUT = "LOGOUT"
+
+
+class Priority(str, Enum):
+    NORMAL = "NORMAL"
+    URGENT = "URGENT"
+    EMERGENCY = "EMERGENCY"
+    VIP = "VIP"
