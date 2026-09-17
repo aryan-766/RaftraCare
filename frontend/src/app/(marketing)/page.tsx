@@ -200,7 +200,7 @@ export default function LandingPage() {
 
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
           <a
-            href="/dashboard"
+            href="/demo"
             className="h-11 px-6 rounded-btn bg-primary hover:bg-primary-hover text-white text-sm font-semibold inline-flex items-center justify-center shadow-sm transition-colors gap-2"
           >
             Explore Live Dashboard <ArrowRight className="w-4 h-4" />
@@ -581,7 +581,7 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <a
-              href="/dashboard"
+              href="/demo"
               className="h-11 px-6 rounded-btn bg-primary hover:bg-primary-hover text-white text-sm font-semibold inline-flex items-center justify-center shadow-md transition-colors"
             >
               Launch Live Workspace

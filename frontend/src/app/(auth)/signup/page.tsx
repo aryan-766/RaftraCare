@@ -8,11 +8,14 @@ import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { Check, ArrowRight, ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 export default function SignupPage() {
   const [step, setStep] = useState(1);
   const router = useRouter();
   const { success } = useToast();
+  const { login, addHospital } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     // Step 1: Account
@@ -32,12 +35,36 @@ export default function SignupPage() {
     plan: "GROWTH",
   });
 
-  const nextStep = (e: React.FormEvent) => {
+  const nextStep = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (step < 4) setStep(step + 1);
-    else {
-      success("Hospital Provisioned", "Organization and facilities initialized. Launching dashboard.");
-      router.push("/dashboard");
+    if (step < 4) {
+      setStep(step + 1);
+    } else {
+      setIsSubmitting(true);
+      try {
+        const hospitalName = formData.hospitalName || formData.orgName || "Metro Life Hospital";
+        const newFacility = addHospital({
+          name: hospitalName,
+          branch_name: "Main Campus",
+          organization_name: formData.orgName || hospitalName,
+          code: formData.code || "MLH-01",
+          city: formData.city || "Gurugram",
+          state: formData.state || "Haryana",
+          max_beds: parseInt(formData.beds) || 100,
+          email: formData.email,
+          subscription_tier: (formData.plan as any) || "GROWTH",
+          is_main_branch: true,
+        });
+
+        await login(formData.email || "admin@hospital.org", formData.password, "HOSPITAL_ADMIN");
+
+        success("Hospital Provisioned", `${newFacility.name} initialized. Welcome to RaftraCare.`);
+        router.push("/dashboard");
+      } catch {
+        router.push("/dashboard");
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 

@@ -45,16 +45,22 @@ export default function MarketingLayout({
           </nav>
 
           {/* Action CTAs */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <a
               href="/login"
-              className="text-xs font-semibold px-3 py-2 text-foreground-muted hover:text-foreground transition-colors"
+              className="text-xs font-semibold px-2.5 py-1.5 text-foreground-muted hover:text-foreground transition-colors"
             >
               Sign In
             </a>
             <a
-              href="/dashboard"
-              className="h-9 px-4 rounded-btn bg-primary hover:bg-primary-hover text-white text-xs font-semibold inline-flex items-center justify-center shadow-xs transition-colors"
+              href="/signup"
+              className="hidden sm:inline-flex text-xs font-semibold px-3 py-1.5 rounded-btn border border-border dark:border-border-dark hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground transition-colors"
+            >
+              Sign Up
+            </a>
+            <a
+              href="/demo"
+              className="h-9 px-4 rounded-btn bg-primary hover:bg-primary-hover text-white text-xs font-bold inline-flex items-center justify-center shadow-xs transition-colors"
             >
               Explore Live System
             </a>
