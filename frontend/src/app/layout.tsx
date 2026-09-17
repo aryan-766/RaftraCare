@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/theme/ThemeContext";
 import { AuthProvider } from "@/lib/auth/AuthContext";
-import { Providers } from "./providers";
+import { Providers } from "@/app/providers";
 
 export const metadata: Metadata = {
   title: "RaftraCare — Hospital Operations System",
