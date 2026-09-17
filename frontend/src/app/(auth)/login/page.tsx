@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { useToast } from "@/components/ui/Toast";
 import { Eye, EyeOff, Lock, Mail, ArrowRight, ShieldCheck } from "lucide-react";
 import { UserRole } from "@/types";
+import { Logo } from "@/components/ui/Logo";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("admin@metrogeneral.org");
@@ -34,7 +35,7 @@ export default function LoginPage() {
     try {
       const ok = await login(email, password, roleOverride);
       if (ok) {
-        success("Signed In", "Welcome back to HospitalOS operations.");
+        success("Signed In", "Welcome back to RaftraCare operations.");
         router.push("/dashboard");
       }
     } catch {
@@ -55,6 +56,11 @@ export default function LoginPage() {
 
   return (
     <div className="space-y-6">
+      {/* Mobile Logo */}
+      <div className="lg:hidden flex justify-center mb-6">
+        <Logo size="md" subtitle="Operations Platform" href="/" />
+      </div>
+
       {/* Header */}
       <div>
         <h2 className="text-2xl font-extrabold tracking-tight text-foreground dark:text-foreground-dark">

@@ -7,6 +7,7 @@ import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { Check, ArrowRight, ArrowLeft } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 
 export default function SignupPage() {
   const [step, setStep] = useState(1);
@@ -42,6 +43,11 @@ export default function SignupPage() {
 
   return (
     <div className="space-y-6">
+      {/* Mobile Logo */}
+      <div className="lg:hidden flex justify-center mb-6">
+        <Logo size="md" subtitle="Operations Platform" href="/" />
+      </div>
+
       <div>
         <div className="flex items-center justify-between mb-2 text-xs font-semibold text-primary uppercase tracking-wider">
           <span>Step {step} of 4</span>
@@ -207,7 +213,7 @@ export default function SignupPage() {
             size="md"
             rightIcon={<ArrowRight className="w-4 h-4" />}
           >
-            {step === 4 ? "Initialize HospitalOS" : "Continue"}
+            {step === 4 ? "Initialize RaftraCare" : "Continue"}
           </Button>
         </div>
       </form>

@@ -39,7 +39,7 @@ export default function ResourcesPage() {
     },
     {
       id: "art_4",
-      title: "HospitalOS Release 2.4: Bidirectional Lab Analyzer LIS Interfaces and Automated WhatsApp Reports",
+      title: "RaftraCare Release 2.4: Bidirectional Lab Analyzer LIS Interfaces and Automated WhatsApp Reports",
       category: "Product Updates",
       readTime: "4 min read",
       date: "15 Aug 2026",

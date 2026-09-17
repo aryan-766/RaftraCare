@@ -11,15 +11,15 @@ export default function AboutPage() {
           Operating software built for real hospitals.
         </h1>
         <p className="text-sm sm:text-base text-foreground-muted dark:text-foreground-mutedDark leading-relaxed">
-          HospitalOS was engineered from a simple operational observation: hospital systems fail
+          RaftraCare was engineered from a simple operational observation: hospital systems fail
           not because they lack features, but because departments are disconnected.
         </p>
       </div>
 
-      {/* Why HospitalOS */}
+      {/* Why RaftraCare */}
       <section className="space-y-4 text-xs">
         <h2 className="text-lg font-bold text-foreground dark:text-foreground-dark">
-          Why HospitalOS
+          Why RaftraCare
         </h2>
         <Card className="p-6 space-y-3 leading-relaxed text-foreground-muted dark:text-foreground-mutedDark">
           <p>
@@ -30,7 +30,7 @@ export default function AboutPage() {
           </p>
           <p>
             When these functions run on separate software databases, medical errors increase, wait
-            times lengthen, and billable procedures fall through the cracks. HospitalOS replaces
+            times lengthen, and billable procedures fall through the cracks. RaftraCare replaces
             departmental silos with a single unified operating platform centered around the
             longitudinal patient record.
           </p>

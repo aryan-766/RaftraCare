@@ -1,4 +1,5 @@
 import React from "react";
+import { Logo } from "@/components/ui/Logo";
 
 export default function AuthLayout({
   children,
@@ -13,18 +14,8 @@ export default function AuthLayout({
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
 
         <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary text-white font-bold flex items-center justify-center text-lg shadow-lg">
-              H
-            </div>
-            <div>
-              <div className="font-extrabold text-xl tracking-tight leading-none">
-                Hospital<span className="text-blue-400">OS</span>
-              </div>
-              <div className="text-xs text-blue-200/80 mt-0.5 font-medium">
-                Healthcare Operations Platform
-              </div>
-            </div>
+          <div className="p-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 inline-flex items-center shadow-lg">
+            <Logo size="md" subtitle="Healthcare Operations Platform" href="/" />
           </div>
         </div>
 
@@ -57,7 +48,7 @@ export default function AuthLayout({
 
         <div className="relative z-10 text-xs text-blue-200/60 flex items-center justify-between">
           <span>Enterprise Grade · ABDM Compliant · 256-Bit TLS</span>
-          <span>© 2026 HospitalOS</span>
+          <span>© 2026 RaftraCare</span>
         </div>
       </div>
 

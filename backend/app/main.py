@@ -1,5 +1,5 @@
 """
-CareBridge HospitalOS — Main FastAPI Application
+RaftraCare HospitalOS — Main FastAPI Application
 """
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
@@ -13,7 +13,7 @@ import structlog
 
 from app.core.config import settings
 from app.core.logging import configure_logging, logger
-from app.core.exceptions import CareBridgeException, EXCEPTION_STATUS_MAP
+from app.core.exceptions import RaftraCareException, EXCEPTION_STATUS_MAP
 from app.database.session import check_db_connection
 
 # Routers
@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
     """Startup and shutdown lifecycle"""
     configure_logging()
     logger.info(
-        "CareBridge HospitalOS starting",
+        "RaftraCare HospitalOS starting",
         environment=settings.environment,
         api_prefix=settings.api_prefix,
     )
@@ -41,12 +41,12 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    logger.info("CareBridge HospitalOS shutting down")
+    logger.info("RaftraCare HospitalOS shutting down")
 
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="CareBridge HospitalOS",
+        title="RaftraCare HospitalOS",
         description="Enterprise multi-tenant Hospital Operating System API",
         version="1.0.0",
         docs_url="/docs" if not settings.is_production else None,
@@ -91,8 +91,8 @@ def create_app() -> FastAPI:
         return response
 
     # ── Global Exception Handlers ────────────────────────────────
-    @app.exception_handler(CareBridgeException)
-    async def carebridge_exception_handler(request: Request, exc: CareBridgeException):
+    @app.exception_handler(RaftraCareException)
+    async def carebridge_exception_handler(request: Request, exc: RaftraCareException):
         status_code = EXCEPTION_STATUS_MAP.get(exc.code, 400)
         return JSONResponse(
             status_code=status_code,

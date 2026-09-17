@@ -5,8 +5,13 @@ import { AuthProvider } from "@/lib/auth/AuthContext";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "HospitalOS — Hospital Operations System",
-  description: "One hospital. One patient record. One connected workflow.",
+  title: "RaftraCare — Hospital Operations System",
+  description: "One hospital. One patient record. One connected workflow. Powered by RaftraCare HospitalOS.",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/icon.png",
+    apple: "/icon-512.png",
+  },
 };
 
 export default function RootLayout({

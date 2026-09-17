@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -20,6 +21,10 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="space-y-6">
+      {/* Mobile Logo */}
+      <div className="lg:hidden flex justify-center mb-6">
+        <Logo size="md" subtitle="Operations Platform" href="/" />
+      </div>
       <div>
         <a
           href="/login"

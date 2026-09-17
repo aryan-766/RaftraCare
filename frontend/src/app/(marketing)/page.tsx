@@ -134,11 +134,11 @@ export default function LandingPage() {
 
   const faqs = [
     {
-      q: "What is HospitalOS?",
-      a: "HospitalOS is a modern, unified hospital operating system designed to manage front desk, OPD, IPD, laboratory, radiology, pharmacy, billing, and clinical administration on a single connected platform.",
+      q: "What is RaftraCare?",
+      a: "RaftraCare is a modern, unified hospital operating system designed to manage front desk, OPD, IPD, laboratory, radiology, pharmacy, billing, and clinical administration on a single connected platform.",
     },
     {
-      q: "Who is HospitalOS built for?",
+      q: "Who is RaftraCare built for?",
       a: "It is built for modern multi-specialty hospitals, nursing homes, and clinic networks ranging from 20 to 500+ beds looking to replace fragmented legacy ERPs with a modern, connected workflow.",
     },
     {
@@ -147,15 +147,15 @@ export default function LandingPage() {
     },
     {
       q: "Can hospitals operate multiple branches?",
-      a: "Yes. HospitalOS supports multi-facility enterprise tenancy. Hospital administrators can switch between facilities or view consolidated cross-branch operational analytics.",
+      a: "Yes. RaftraCare supports multi-facility enterprise tenancy. Hospital administrators can switch between facilities or view consolidated cross-branch operational analytics.",
     },
     {
       q: "Does it support fine-grained role-based access control (RBAC)?",
-      a: "Yes. HospitalOS enforces a 9-role matrix (Hospital Admin, Doctor, Nurse, Receptionist, Pharmacist, Lab Technician, Accountant, etc.) where each role only accesses strictly authorized medical modules.",
+      a: "Yes. RaftraCare enforces a 9-role matrix (Hospital Admin, Doctor, Nurse, Receptionist, Pharmacist, Lab Technician, Accountant, etc.) where each role only accesses strictly authorized medical modules.",
     },
     {
       q: "Can we connect existing lab analyzers and diagnostic machines?",
-      a: "Yes. HospitalOS supports standard laboratory bidirectional interfaces (ASTM / HL7) and DICOM imaging bridges for digital X-Ray and CT workstations.",
+      a: "Yes. RaftraCare supports standard laboratory bidirectional interfaces (ASTM / HL7) and DICOM imaging bridges for digital X-Ray and CT workstations.",
     },
     {
       q: "Does it support billing and insurance TPA pre-authorization?",
@@ -166,11 +166,11 @@ export default function LandingPage() {
       a: "Yes. Integrated WhatsApp Business API automatically delivers appointment confirmations, lab report PDFs, and digital discharge receipts to patient phones.",
     },
     {
-      q: "Is HospitalOS ABDM (Ayushman Bharat Digital Mission) compliant?",
+      q: "Is RaftraCare ABDM (Ayushman Bharat Digital Mission) compliant?",
       a: "Yes. The architecture is engineered around the National Health Authority ABDM standards for ABHA ID creation, health locker linkage, and M1-M3 certification.",
     },
     {
-      q: "Is AI mandatory to operate HospitalOS?",
+      q: "Is AI mandatory to operate RaftraCare?",
       a: "No. All operational and clinical workflows are 100% deterministic and complete without AI. Practical smart assistance (smart search, document extraction) is subtle and keeps the human clinician in full control.",
     },
     {
@@ -184,8 +184,8 @@ export default function LandingPage() {
       {/* 1. HERO SECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/80 text-primary border border-blue-200 dark:border-blue-800">
-          <span className="w-2 h-2 rounded-full bg-primary" />
-          Enterprise Healthcare Operations Platform
+          <img src="/logo.png" alt="RaftraCare" className="w-4 h-4 object-contain" />
+          <span>RaftraCare — Enterprise Healthcare Operations Platform</span>
         </div>
 
         <div className="max-w-4xl mx-auto space-y-4">
@@ -213,7 +213,7 @@ export default function LandingPage() {
           </a>
         </div>
 
-        {/* Hero Visual: Realistic HospitalOS Dashboard Preview */}
+        {/* Hero Visual: Realistic RaftraCare Dashboard Preview */}
         <div className="pt-8 max-w-5xl mx-auto">
           <div className="rounded-xl border border-border dark:border-border-dark bg-white dark:bg-surface-dark shadow-2xl overflow-hidden text-left text-xs">
             {/* Window title bar */}
@@ -223,7 +223,7 @@ export default function LandingPage() {
                 <span className="w-3 h-3 rounded-full bg-amber-400" />
                 <span className="w-3 h-3 rounded-full bg-emerald-400" />
                 <span className="font-mono text-[11px] text-foreground-muted ml-2">
-                  app.hospitalos.io/dashboard · Metro General Hospital
+                  app.raftracare.io/dashboard · Metro General Hospital
                 </span>
               </div>
               <span className="font-mono text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded">
@@ -307,7 +307,7 @@ export default function LandingPage() {
             </p>
           </Card>
           <Card className="p-5 space-y-2 border-t-4 border-t-primary">
-            <h3 className="font-bold text-sm text-foreground">The HospitalOS Solution</h3>
+            <h3 className="font-bold text-sm text-foreground">The RaftraCare Solution</h3>
             <p className="text-xs text-foreground-muted leading-relaxed">
               Enter information once. One single patient record carries through registration,
               consultation, orders, pharmacy dispensing, and insurance claim settlement.
@@ -368,7 +368,7 @@ export default function LandingPage() {
       <section id="modules" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="text-center max-w-2xl mx-auto space-y-2">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground dark:text-foreground-dark">
-            Comprehensive HospitalOS Modules
+            Comprehensive RaftraCare Modules
           </h2>
           <p className="text-xs sm:text-sm text-foreground-muted">
             Engineered for tertiary care operations. No missing departments or generic templates.
@@ -531,7 +531,7 @@ export default function LandingPage() {
             Frequently Asked Questions
           </h2>
           <p className="text-xs sm:text-sm text-foreground-muted">
-            Factual architecture, deployment, and operational details about HospitalOS.
+            Factual architecture, deployment, and operational details about RaftraCare.
           </p>
         </div>
 
@@ -569,7 +569,7 @@ export default function LandingPage() {
             Ready to unify your hospital operations?
           </h2>
           <p className="text-xs sm:text-sm text-blue-100/80 max-w-xl mx-auto leading-relaxed">
-            Deploy HospitalOS in your hospital. Connect front desk, OPD, IPD, lab, pharmacy, and
+            Deploy RaftraCare in your hospital. Connect front desk, OPD, IPD, lab, pharmacy, and
             billing on a single proven architecture.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">

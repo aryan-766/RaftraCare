@@ -1,4 +1,4 @@
-# CareBridge HospitalOS — Python Backend
+# RaftraCare HospitalOS — Python Backend
 
 ## Project Structure
 ```
@@ -26,7 +26,7 @@ backend/
 
 ### 1. Activate virtual environment
 ```bash
-# From CareBridge root
+# From RaftraCare root
 .venv\Scripts\activate        # Windows
 source .venv/bin/activate     # Linux/Mac
 ```

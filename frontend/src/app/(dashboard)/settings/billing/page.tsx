@@ -90,7 +90,7 @@ export default function SaaSBillingPage() {
     setTimeout(() => {
       setIsProcessing(false);
       setPaymentSuccess(true);
-      success("Subscription Active", `HospitalOS upgraded to ${selectedPlan} tier via Razorpay.`);
+      success("Subscription Active", `RaftraCare upgraded to ${selectedPlan} tier via Razorpay.`);
     }, 1200);
   };
 
@@ -100,7 +100,7 @@ export default function SaaSBillingPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/70 dark:border-border-dark pb-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-foreground dark:text-foreground-dark flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" /> Subscription & HospitalOS SaaS Plan
+            <Sparkles className="w-5 h-5 text-primary" /> Subscription & RaftraCare SaaS Plan
           </h1>
           <p className="text-xs text-foreground-muted dark:text-foreground-mutedDark mt-0.5">
             Facility licensing, active bed quota, Razorpay auto-billing, and tax invoices
@@ -121,7 +121,7 @@ export default function SaaSBillingPage() {
                 Current Active Tier
               </span>
               <h3 className="text-2xl font-extrabold text-foreground dark:text-foreground-dark mt-0.5">
-                HospitalOS Growth Plan
+                RaftraCare Growth Plan
               </h3>
             </div>
             <div className="text-right">
@@ -189,7 +189,7 @@ export default function SaaSBillingPage() {
       {/* Plan Cards */}
       <div className="space-y-4">
         <h3 className="text-base font-bold text-foreground dark:text-foreground-dark">
-          Available HospitalOS Plans
+          Available RaftraCare Plans
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -255,7 +255,7 @@ export default function SaaSBillingPage() {
       {/* SaaS Invoice History Table */}
       <div className="space-y-3">
         <h3 className="text-sm font-bold text-foreground dark:text-foreground-dark">
-          HospitalOS Billing Invoices
+          RaftraCare Billing Invoices
         </h3>
         <Card className="divide-y divide-border dark:divide-border-dark text-xs">
           {[

@@ -29,7 +29,7 @@ export default function PatientPortalConfigPage() {
         </h3>
         <p className="text-foreground-muted">
           Your public patient portal is accessible at:{" "}
-          <strong className="text-primary underline">https://portal.hospitalos.io/metrogeneral</strong>
+          <strong className="text-primary underline">https://portal.raftracare.io/metrogeneral</strong>
         </p>
         <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg flex items-center justify-between">
           <span>Printed on all prescription headers and bill receipts automatically.</span>

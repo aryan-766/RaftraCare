@@ -1,40 +1,40 @@
 from fastapi import HTTPException, status
 
 
-class CareBridgeException(Exception):
-    """Base exception for CareBridge HospitalOS"""
+class RaftraCareException(Exception):
+    """Base exception for RaftraCare HospitalOS"""
     def __init__(self, message: str, code: str = "INTERNAL_ERROR"):
         self.message = message
         self.code = code
         super().__init__(self.message)
 
 
-class NotFoundError(CareBridgeException):
+class NotFoundError(RaftraCareException):
     def __init__(self, message: str = "Resource not found"):
         super().__init__(message, "NOT_FOUND")
 
 
-class UnauthorizedError(CareBridgeException):
+class UnauthorizedError(RaftraCareException):
     def __init__(self, message: str = "Unauthorized"):
         super().__init__(message, "UNAUTHORIZED")
 
 
-class ForbiddenError(CareBridgeException):
+class ForbiddenError(RaftraCareException):
     def __init__(self, message: str = "Forbidden: Insufficient permissions"):
         super().__init__(message, "FORBIDDEN")
 
 
-class ConflictError(CareBridgeException):
+class ConflictError(RaftraCareException):
     def __init__(self, message: str = "Resource conflict"):
         super().__init__(message, "CONFLICT")
 
 
-class BadRequestError(CareBridgeException):
+class BadRequestError(RaftraCareException):
     def __init__(self, message: str = "Bad request"):
         super().__init__(message, "BAD_REQUEST")
 
 
-class ValidationError(CareBridgeException):
+class ValidationError(RaftraCareException):
     def __init__(self, message: str = "Validation failed", details: list = None):
         self.details = details or []
         super().__init__(message, "VALIDATION_ERROR")

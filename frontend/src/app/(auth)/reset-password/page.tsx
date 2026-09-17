@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { Lock, CheckCircle2 } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -30,12 +31,17 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="space-y-6">
+      {/* Mobile Logo */}
+      <div className="lg:hidden flex justify-center mb-6">
+        <Logo size="md" subtitle="Operations Platform" href="/" />
+      </div>
+
       <div>
         <h2 className="text-2xl font-extrabold tracking-tight text-foreground dark:text-foreground-dark">
           Choose New Password
         </h2>
         <p className="text-xs text-foreground-muted dark:text-foreground-mutedDark mt-1">
-          Set a secure alphanumeric password for your HospitalOS account
+          Set a secure alphanumeric password for your RaftraCare account
         </p>
       </div>
 

@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { Logo } from "@/components/ui/Logo";
 
 export default function MarketingLayout({
   children,
@@ -13,14 +14,7 @@ export default function MarketingLayout({
       <header className="sticky top-0 z-40 w-full border-b border-border/80 dark:border-border-dark bg-white/95 dark:bg-surface-dark/95 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary text-white font-bold flex items-center justify-center text-sm shadow-sm">
-              H
-            </div>
-            <span className="font-extrabold text-lg tracking-tight">
-              Hospital<span className="text-primary">OS</span>
-            </span>
-          </a>
+          <Logo size="md" subtitle="Hospital Operations OS" href="/" />
 
           {/* Nav Links */}
           <nav className="hidden md:flex items-center gap-7 text-xs font-semibold text-foreground-muted dark:text-foreground-mutedDark">
@@ -75,14 +69,7 @@ export default function MarketingLayout({
       <footer className="border-t border-border dark:border-border-dark bg-white dark:bg-surface-dark py-14 px-4 sm:px-6 lg:px-8 text-xs text-foreground-muted dark:text-foreground-mutedDark">
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2 space-y-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-primary text-white font-bold flex items-center justify-center text-xs">
-                H
-              </div>
-              <span className="font-extrabold text-base text-foreground dark:text-foreground-dark">
-                Hospital<span className="text-primary">OS</span>
-              </span>
-            </div>
+            <Logo size="sm" subtitle="Unified Healthcare Platform" href="/" />
             <p className="max-w-sm text-xs leading-relaxed">
               The operating system for modern healthcare institutions. One connected system for
               front desk, OPD, IPD, diagnostics, pharmacy, billing, and clinical governance.
@@ -133,7 +120,7 @@ export default function MarketingLayout({
         </div>
 
         <div className="max-w-7xl mx-auto mt-12 pt-6 border-t border-border/60 dark:border-border-dark flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px]">
-          <span>© 2026 HospitalOS Technologies Inc. All rights reserved.</span>
+          <span>© 2026 RaftraCare Technologies Inc. All rights reserved.</span>
           <span>Designed for serious hospital operations.</span>
         </div>
       </footer>

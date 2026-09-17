@@ -1,8 +1,8 @@
-# CareBridge HospitalOS — Monorepo
+# RaftraCare HospitalOS — Monorepo
 
 ## Structure
 ```
-CareBridge/
+RaftraCare/
 ├── backend/          # FastAPI Python backend
 │   ├── app/          # Application code
 │   ├── alembic/      # DB migrations

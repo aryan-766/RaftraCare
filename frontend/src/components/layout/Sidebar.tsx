@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { UserRole } from "@/types";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/ui/Logo";
 import {
   LayoutDashboard,
   Users,
@@ -353,26 +354,12 @@ export function Sidebar({
   const sidebarContent = (
     <div className="flex flex-col h-full bg-white dark:bg-surface-dark border-r border-border dark:border-border-dark select-none">
       {/* Brand Header */}
-      <div className="h-14 px-4 border-b border-border dark:border-border-dark flex items-center justify-between shrink-0">
-        {!collapsed && (
-          <a href="/dashboard" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary text-white font-bold flex items-center justify-center text-sm shadow-xs">
-              H
-            </div>
-            <div>
-              <div className="font-bold text-sm tracking-tight text-foreground dark:text-foreground-dark leading-none">
-                Hospital<span className="text-primary">OS</span>
-              </div>
-              <div className="text-[10px] text-foreground-muted dark:text-foreground-mutedDark mt-0.5 font-medium">
-                Enterprise Operations
-              </div>
-            </div>
-          </a>
-        )}
-
-        {collapsed && (
-          <div className="w-8 h-8 mx-auto rounded-lg bg-primary text-white font-bold flex items-center justify-center text-sm shadow-xs">
-            H
+      <div className="h-14 px-3.5 border-b border-border dark:border-border-dark flex items-center justify-between shrink-0">
+        {!collapsed ? (
+          <Logo size="sm" subtitle="Operations OS" href="/dashboard" />
+        ) : (
+          <div className="mx-auto">
+            <Logo size="sm" showWordmark={false} href="/dashboard" />
           </div>
         )}
 

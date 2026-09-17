@@ -34,7 +34,7 @@ const DEFAULT_HOSPITAL: Hospital = {
 const DEFAULT_USERS_BY_ROLE: Record<UserRole, User> = {
   SUPER_ADMIN: {
     id: "usr_super_01",
-    email: "superadmin@hospitalos.io",
+    email: "superadmin@raftracare.io",
     first_name: "Vikram",
     last_name: "Mehta",
     role: "SUPER_ADMIN",
