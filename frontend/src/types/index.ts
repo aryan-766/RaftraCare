@@ -122,6 +122,11 @@ export interface Hospital {
   subscription_tier: SubscriptionTier;
   subscription_status: SubscriptionStatus;
   max_beds: number;
+  organization_id?: string;
+  organization_name?: string;
+  branch_name?: string;
+  is_main_branch?: boolean;
+  total_branches?: number;
 }
 
 export interface Patient {

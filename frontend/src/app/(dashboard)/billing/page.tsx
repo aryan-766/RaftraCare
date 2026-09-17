@@ -9,7 +9,7 @@ import { Drawer } from "@/components/ui/Drawer";
 import { useToast } from "@/components/ui/Toast";
 import { MOCK_INVOICES } from "@/lib/mock/data";
 import { Invoice } from "@/types";
-import { CreditCard, Printer, Check, Plus, ShieldCheck, Download } from "lucide-react";
+import { CreditCard, Printer, Check, Plus, ShieldCheck, Download, Sparkles } from "lucide-react";
 
 export default function BillingPage() {
   const [invoices, setInvoices] = useState<Invoice[]>(MOCK_INVOICES);
@@ -104,7 +104,7 @@ export default function BillingPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border/70 dark:border-border-dark pb-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-foreground dark:text-foreground-dark">
-            Hospital Revenue & Billing
+            Hospital Revenue & Patient Billing
           </h1>
           <p className="text-xs text-foreground-muted dark:text-foreground-mutedDark mt-0.5">
             Patient invoices, cashier settlement, TPA insurance claims, and tax receipts
@@ -112,12 +112,17 @@ export default function BillingPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <a href="/plans">
+            <Button size="sm" variant="outline" leftIcon={<Sparkles className="w-4 h-4 text-amber-500" />}>
+              SaaS Plans & Licensing
+            </Button>
+          </a>
           <Button
             size="sm"
             onClick={() => success("New Bill", "Billing encounter drawer opened.")}
             leftIcon={<Plus className="w-4 h-4" />}
           >
-            + Create New Invoice
+            New Patient Invoice
           </Button>
         </div>
       </div>

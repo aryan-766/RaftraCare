@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { CommandMenu } from "@/components/layout/CommandMenu";
@@ -18,10 +20,31 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [commandMenuOpen, setCommandMenuOpen] = useState(false);
   const [activeDrawer, setActiveDrawer] = useState<string | null>(null);
   const { success, error } = useToast();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-background dark:bg-background-dark text-xs space-y-3">
+        <Logo size="lg" subtitle="Loading Operations..." />
+        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mt-2" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   // Quick Action Form States
   const [patientForm, setPatientForm] = useState({

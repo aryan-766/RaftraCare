@@ -9,8 +9,10 @@ export interface ModalProps {
   onClose: () => void;
   title?: string;
   description?: string;
+  subtitle?: string;
   children: React.ReactNode;
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl";
+  size?: "sm" | "md" | "lg" | "xl" | "2xl";
 }
 
 export function Modal({
@@ -18,8 +20,10 @@ export function Modal({
   onClose,
   title,
   description,
+  subtitle,
   children,
   maxWidth = "md",
+  size,
 }: ModalProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -37,6 +41,9 @@ export function Modal({
 
   if (!isOpen) return null;
 
+  const resolvedWidth = size || maxWidth;
+  const resolvedDesc = description || subtitle;
+
   const maxWidthClasses = {
     sm: "max-w-sm",
     md: "max-w-md",
@@ -50,10 +57,10 @@ export function Modal({
       <div
         className={cn(
           "w-full bg-white dark:bg-surface-dark border border-border dark:border-border-dark rounded-modal shadow-modal overflow-hidden animate-in zoom-in-95 duration-150",
-          maxWidthClasses[maxWidth]
+          maxWidthClasses[resolvedWidth]
         )}
       >
-        {(title || description) && (
+        {(title || resolvedDesc) && (
           <div className="px-6 py-4 border-b border-border dark:border-border-dark flex items-center justify-between">
             <div>
               {title && (
@@ -61,9 +68,9 @@ export function Modal({
                   {title}
                 </h3>
               )}
-              {description && (
+              {resolvedDesc && (
                 <p className="text-xs text-foreground-muted dark:text-foreground-mutedDark mt-0.5">
-                  {description}
+                  {resolvedDesc}
                 </p>
               )}
             </div>

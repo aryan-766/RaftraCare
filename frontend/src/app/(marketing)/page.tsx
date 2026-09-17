@@ -206,8 +206,15 @@ export default function LandingPage() {
             Explore Live Dashboard <ArrowRight className="w-4 h-4" />
           </a>
           <a
+            href="/pricing"
+            className="h-11 px-6 rounded-btn bg-white dark:bg-surface-dark border border-border dark:border-border-dark hover:bg-slate-50 dark:hover:bg-slate-800 text-primary font-bold text-sm inline-flex items-center justify-center transition-colors gap-2 shadow-2xs"
+          >
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            Plans & Pricing
+          </a>
+          <a
             href="/signup"
-            className="h-11 px-6 rounded-btn bg-white dark:bg-surface-dark border border-border dark:border-border-dark hover:bg-slate-50 dark:hover:bg-slate-800 text-foreground dark:text-foreground-dark text-sm font-semibold inline-flex items-center justify-center transition-colors"
+            className="h-11 px-5 rounded-btn hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-sm font-semibold inline-flex items-center justify-center transition-colors"
           >
             Register Facility
           </a>

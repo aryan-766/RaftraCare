@@ -30,8 +30,8 @@ export default function MarketingLayout({
             <a href="/#roles" className="hover:text-foreground dark:hover:text-foreground-dark transition-colors">
               Solutions
             </a>
-            <a href="/#security" className="hover:text-foreground dark:hover:text-foreground-dark transition-colors">
-              Security
+            <a href="/pricing" className="text-primary font-bold hover:text-primary-hover transition-colors">
+              Plans & Pricing
             </a>
             <a href="/about" className="hover:text-foreground dark:hover:text-foreground-dark transition-colors">
               About
@@ -90,6 +90,7 @@ export default function MarketingLayout({
               <li><a href="/#modules" className="hover:underline">Laboratory LIS</a></li>
               <li><a href="/#modules" className="hover:underline">Pharmacy Dispensing</a></li>
               <li><a href="/#modules" className="hover:underline">Revenue & Billing</a></li>
+              <li><a href="/pricing" className="text-primary font-bold hover:underline">SaaS Plans & Pricing</a></li>
             </ul>
           </div>
 

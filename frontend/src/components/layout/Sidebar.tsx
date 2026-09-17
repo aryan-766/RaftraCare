@@ -44,6 +44,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  LogOut,
 } from "lucide-react";
 
 interface NavItem {
@@ -68,7 +69,7 @@ export function Sidebar({
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, hospital, logout } = useAuth();
 
   const currentRole = user?.role || "HOSPITAL_ADMIN";
 
@@ -238,6 +239,13 @@ export function Sidebar({
           icon: Tags,
           allowedRoles: ["SUPER_ADMIN", "HOSPITAL_ADMIN", "ACCOUNTANT"],
         },
+        {
+          title: "SaaS Plans & Billing",
+          href: "/plans",
+          icon: Sparkles,
+          allowedRoles: ["SUPER_ADMIN", "HOSPITAL_ADMIN", "ACCOUNTANT"],
+          badge: "Active",
+        },
       ],
     },
     {
@@ -323,8 +331,8 @@ export function Sidebar({
       section: "ADMIN",
       items: [
         {
-          title: "SaaS Billing",
-          href: "/settings/billing",
+          title: "SaaS Multi-Tenancy",
+          href: "/plans",
           icon: Sparkles,
           allowedRoles: ["SUPER_ADMIN", "HOSPITAL_ADMIN"],
           badge: "Pro",
@@ -439,11 +447,41 @@ export function Sidebar({
         })}
       </div>
 
-      {/* Role Indicator Footer */}
-      {!collapsed && (
-        <div className="p-3 border-t border-border dark:border-border-dark bg-slate-50/50 dark:bg-slate-900/30 text-[11px] text-foreground-muted dark:text-foreground-mutedDark flex items-center justify-between">
-          <span className="truncate font-medium">Role: {currentRole}</span>
-          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Online" />
+      {/* Footer: User Profile + Sign Out */}
+      {!collapsed ? (
+        <div className="p-2.5 border-t border-border dark:border-border-dark bg-slate-50/70 dark:bg-slate-900/50 space-y-2">
+          <div className="flex items-center justify-between gap-2 px-1">
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-bold text-foreground dark:text-foreground-dark truncate">
+                {user?.first_name} {user?.last_name}
+              </div>
+              <div className="text-[10px] text-primary font-medium truncate flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                {hospital?.branch_name || hospital?.name}
+              </div>
+            </div>
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/50 text-primary uppercase shrink-0">
+              {currentRole.replace(/_/g, " ").slice(0, 10)}
+            </span>
+          </div>
+
+          <button
+            onClick={logout}
+            className="w-full py-1.5 px-2.5 rounded-md bg-white dark:bg-slate-800 border border-border dark:border-border-dark hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 font-bold text-xs flex items-center justify-center gap-2 transition-colors shadow-2xs group"
+          >
+            <LogOut className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      ) : (
+        <div className="p-2 border-t border-border dark:border-border-dark flex justify-center">
+          <button
+            onClick={logout}
+            title="Sign Out of Dashboard"
+            className="p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       )}
     </div>
