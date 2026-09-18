@@ -12,26 +12,59 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
-import { api } from "@/lib/api/client";
+import { patientsApi } from "@/lib/api/patients";
+import { appointmentsApi } from "@/lib/api/appointments";
 import { Menu } from "lucide-react";
+import { DesktopLock } from "@/components/layout/DesktopLock";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isLoading } = useAuth();
+  const { user, hospital, isLoading } = useAuth();
   const router = useRouter();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [commandMenuOpen, setCommandMenuOpen] = useState(false);
   const [activeDrawer, setActiveDrawer] = useState<string | null>(null);
   const { success, error } = useToast();
 
+  // Quick Action Form States (Must be declared before any conditional returns)
+  const [patientForm, setPatientForm] = useState({
+    first_name: "",
+    last_name: "",
+    gender: "MALE",
+    age: "35",
+    phone: "",
+    blood_group: "B+",
+    address: "",
+  });
+
+  const [appointmentForm, setAppointmentForm] = useState({
+    patient_id: "",
+    patient_name: "",
+    patient_uhid: "",
+    doctor_name: "",
+    doctor_id: "",
+    department_name: "General Medicine",
+    department_id: "",
+    appointment_date: new Date().toISOString().split("T")[0],
+    appointment_time: "10:30",
+    reason: "",
+    priority: "NORMAL",
+  });
+
   useEffect(() => {
     if (!isLoading && !user) {
-      router.push("/login");
+      const stored =
+        typeof window !== "undefined" &&
+        (localStorage.getItem("raftracare_access_token") ||
+          localStorage.getItem("raftracare-user"));
+      if (!stored) {
+        window.location.href = "/login";
+      }
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading]);
 
   if (isLoading) {
     return (
@@ -46,88 +79,69 @@ export default function DashboardLayout({
     return null;
   }
 
-  // Quick Action Form States
-  const [patientForm, setPatientForm] = useState({
-    first_name: "",
-    last_name: "",
-    gender: "MALE",
-    age: "35",
-    phone: "",
-    blood_group: "B+",
-    address: "",
-  });
-
-  const [appointmentForm, setAppointmentForm] = useState({
-    patient_name: "",
-    patient_uhid: "HOS-001284",
-    doctor_name: "Dr. Rajesh Sharma",
-    doctor_id: "doc_01",
-    department_name: "Cardiology",
-    department_id: "dept_cardio",
-    appointment_date: "2026-09-17",
-    appointment_time: "10:30 AM",
-    reason: "",
-    priority: "NORMAL",
-  });
-
   const handleCreatePatient = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!patientForm.first_name || !patientForm.phone) {
       error("Missing fields", "Please enter patient name and contact phone.");
       return;
     }
-    const created = await api.createPatient({
-      hospital_id: "hosp_metro_01",
-      first_name: patientForm.first_name,
-      last_name: patientForm.last_name,
-      gender: patientForm.gender as "MALE" | "FEMALE",
-      dob: "1990-01-01",
-      age: parseInt(patientForm.age) || 30,
-      phone: patientForm.phone,
-      blood_group: patientForm.blood_group,
-      address: patientForm.address,
-    });
-    success("Patient Registered", `UHID ${created.uhid} generated successfully.`);
-    setActiveDrawer(null);
-    setPatientForm({
-      first_name: "",
-      last_name: "",
-      gender: "MALE",
-      age: "35",
-      phone: "",
-      blood_group: "B+",
-      address: "",
-    });
+    try {
+      const created = await patientsApi.register({
+        first_name: patientForm.first_name,
+        last_name: patientForm.last_name || "Patient",
+        gender: patientForm.gender as any,
+        date_of_birth: "1990-01-01",
+        phone: patientForm.phone,
+        blood_group: patientForm.blood_group,
+        address_line1: patientForm.address,
+      });
+      success("Patient Registered", `UHID ${created.uhid} generated successfully.`);
+      setActiveDrawer(null);
+      setPatientForm({
+        first_name: "",
+        last_name: "",
+        gender: "MALE",
+        age: "35",
+        phone: "",
+        blood_group: "B+",
+        address: "",
+      });
+    } catch (err: any) {
+      error("Registration Failed", err.message || "Could not register patient.");
+    }
   };
 
   const handleBookAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!appointmentForm.patient_name) {
-      error("Missing fields", "Please enter patient name.");
+    if (!appointmentForm.patient_id) {
+      error("Missing fields", "Please select or provide patient ID.");
       return;
     }
-    const apt = await api.createAppointment({
-      hospital_id: "hosp_metro_01",
-      patient_id: "pat_001",
-      patient_name: appointmentForm.patient_name,
-      patient_uhid: appointmentForm.patient_uhid,
-      doctor_id: appointmentForm.doctor_id,
-      doctor_name: appointmentForm.doctor_name,
-      department_id: appointmentForm.department_id,
-      department_name: appointmentForm.department_name,
-      appointment_date: appointmentForm.appointment_date,
-      appointment_time: appointmentForm.appointment_time,
-      status: "CONFIRMED",
-      priority: appointmentForm.priority as "NORMAL" | "URGENT",
-      is_teleconsult: false,
-      reason_for_visit: appointmentForm.reason,
-    });
-    success("Appointment Booked", `Token ${apt.token_number} generated for ${apt.patient_name}.`);
-    setActiveDrawer(null);
+    try {
+      const apt = await appointmentsApi.book({
+        patient_id: appointmentForm.patient_id,
+        doctor_id: appointmentForm.doctor_id || user.id,
+        department_id: appointmentForm.department_id || undefined,
+        appointment_date: appointmentForm.appointment_date,
+        slot_start_time: appointmentForm.appointment_time || "10:30",
+        slot_end_time: "11:00",
+        reason: appointmentForm.reason,
+        priority: appointmentForm.priority as any,
+      });
+      success("Appointment Booked", `Token #${apt.token_number} confirmed.`);
+      setActiveDrawer(null);
+    } catch (err: any) {
+      error("Booking Failed", err.message || "Could not book appointment.");
+    }
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background dark:bg-background-dark">
+    <>
+      {/* Mobile Lock: Enforces Desktop / Tablet landscape for clinical safety */}
+      <DesktopLock />
+
+      {/* Clinical Workstation Layout (Only visible on screens >= 1024px) */}
+      <div className="hidden lg:flex h-screen overflow-hidden bg-background dark:bg-background-dark">
       {/* Sidebar */}
       <Sidebar
         mobileOpen={mobileSidebarOpen}
@@ -256,8 +270,14 @@ export default function DashboardLayout({
       >
         <form onSubmit={handleBookAppointment} className="space-y-4 text-xs">
           <Input
-            label="Patient Name *"
+            label="Patient ID / UUID *"
             required
+            value={appointmentForm.patient_id}
+            onChange={(e) => setAppointmentForm({ ...appointmentForm, patient_id: e.target.value })}
+            placeholder="e.g. pat_9482 or UUID"
+          />
+          <Input
+            label="Patient Full Name"
             value={appointmentForm.patient_name}
             onChange={(e) => setAppointmentForm({ ...appointmentForm, patient_name: e.target.value })}
             placeholder="e.g. Raj Kumar"
@@ -404,6 +424,7 @@ export default function DashboardLayout({
           </div>
         </div>
       </Drawer>
-    </div>
+      </div>
+    </>
   );
 }

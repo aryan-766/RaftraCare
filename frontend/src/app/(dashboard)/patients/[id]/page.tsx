@@ -31,14 +31,44 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
+import { patientsApi, PatientDetail } from "@/lib/api/patients";
+
 export default function Patient360Page() {
   const params = useParams();
   const router = useRouter();
   const { success } = useToast();
   const patientId = params.id as string;
 
-  const patient =
-    MOCK_PATIENTS.find((p) => p.id === patientId || p.uhid === patientId) || MOCK_PATIENTS[0];
+  const [livePatient, setLivePatient] = useState<PatientDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (patientId && !patientId.startsWith("pat_mock")) {
+      setIsLoading(true);
+      patientsApi
+        .getById(patientId)
+        .then((res) => setLivePatient(res))
+        .catch(() => {})
+        .finally(() => setIsLoading(false));
+    }
+  }, [patientId]);
+
+  const fallback = MOCK_PATIENTS.find((p) => p.id === patientId || p.uhid === patientId) || MOCK_PATIENTS[0];
+
+  const patient = livePatient
+    ? {
+        ...fallback,
+        id: livePatient.id,
+        uhid: livePatient.uhid,
+        first_name: livePatient.first_name,
+        last_name: livePatient.last_name,
+        gender: livePatient.gender,
+        blood_group: livePatient.blood_group || fallback.blood_group,
+        phone: livePatient.phone || fallback.phone,
+        address: livePatient.address_line1 || fallback.address,
+        allergies: livePatient.allergies || fallback.allergies,
+      }
+    : fallback;
 
   const [activeTab, setActiveTab] = useState("overview");
 

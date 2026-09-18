@@ -1,8 +1,8 @@
 """
 Auth Schemas — Pydantic v2 validation models for authentication endpoints
 """
-from pydantic import BaseModel, EmailStr, Field, field_validator
-from typing import Optional
+from pydantic import BaseModel, EmailStr, Field
+from typing import Optional, List
 from app.core.enums import UserRole
 
 
@@ -39,6 +39,14 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str = Field(min_length=1)
 
 
+class SwitchHospitalRequest(BaseModel):
+    hospital_id: str = Field(min_length=1)
+
+
+class LogoutRequest(BaseModel):
+    refresh_token: Optional[str] = None
+
+
 class InviteStaffRequest(BaseModel):
     email: EmailStr
     first_name: str = Field(min_length=2, max_length=100)
@@ -60,6 +68,21 @@ class TokenResponse(BaseModel):
     refresh_token: str
     token_type: str = "Bearer"
     expires_in: str
+
+    class Config:
+        from_attributes = True
+
+
+class FacilityItem(BaseModel):
+    id: str
+    name: str
+    slug: str
+    code: str
+    role: UserRole
+    phone: str
+    city: str
+    state: str
+    is_active: bool
 
     class Config:
         from_attributes = True

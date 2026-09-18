@@ -13,12 +13,50 @@ import { MOCK_APPOINTMENTS } from "@/lib/mock/data";
 import { Appointment } from "@/types";
 import { Calendar as CalendarIcon, Clock, User, Plus, Filter, Check, X, RefreshCw } from "lucide-react";
 
+import { appointmentsApi } from "@/lib/api/appointments";
+
 export default function AppointmentsPage() {
   const [view, setView] = useState<"day" | "week" | "month" | "list">("list");
   const [selectedDept, setSelectedDept] = useState("ALL");
   const [selectedApt, setSelectedApt] = useState<Appointment | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>(MOCK_APPOINTMENTS);
+  const [isLoading, setIsLoading] = useState(false);
   const { success } = useToast();
+
+  const loadAppointments = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const list = await appointmentsApi.list();
+      if (list && list.length > 0) {
+        const mapped: Appointment[] = list.map((a) => ({
+          id: a.id,
+          hospital_id: "",
+          patient_id: a.patient_id,
+          doctor_id: a.doctor_id,
+          department_id: "dept_cardio",
+          patient_name: `Patient ${a.patient_id.slice(0, 6)}`,
+          patient_uhid: `UHID-${a.token_number}`,
+          doctor_name: "Attending Physician",
+          department_name: "General OPD",
+          appointment_date: a.appointment_date,
+          appointment_time: a.slot_start_time,
+          token_number: String(a.token_number),
+          status: a.status,
+          priority: a.priority,
+          is_teleconsult: false,
+        }));
+        setAppointments(mapped);
+      }
+    } catch {
+      // Backend offline
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    loadAppointments();
+  }, [loadAppointments]);
 
   const filtered = appointments.filter((a) => {
     if (selectedDept !== "ALL" && a.department_name !== selectedDept) return false;

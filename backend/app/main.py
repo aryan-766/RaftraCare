@@ -42,6 +42,8 @@ async def lifespan(app: FastAPI):
     yield
 
     logger.info("RaftraCare HospitalOS shutting down")
+    from app.database.session import engine
+    await engine.dispose()
 
 
 def create_app() -> FastAPI:
@@ -79,8 +81,11 @@ def create_app() -> FastAPI:
 
         response.headers["X-Request-ID"] = request_id
         response.headers["X-Response-Time"] = f"{duration_ms}ms"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
 
-        if request.url.path not in ("/healthz", "/readyz"):
+        if request.url.path not in ("/healthz", "/readyz", "/health"):
             logger.info(
                 "Request",
                 method=request.method,
@@ -117,11 +122,12 @@ def create_app() -> FastAPI:
         )
 
     # ── Health & Readiness Endpoints ─────────────────────────────
+    @app.get("/health", tags=["Health"])
     @app.get("/healthz", tags=["Health"])
     async def health_check():
         return {
             "status": "ok",
-            "service": "carebridge-hospitalos",
+            "service": "raftracare-hospitalos",
             "environment": settings.environment,
         }
 

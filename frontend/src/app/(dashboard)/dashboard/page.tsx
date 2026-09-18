@@ -18,10 +18,38 @@ import {
   ArrowRight,
   TrendingUp,
 } from "lucide-react";
+import { appointmentsApi } from "@/lib/api/appointments";
 
 export default function DashboardPage() {
   const { user, hospital } = useAuth();
   const [selectedFlowStage, setSelectedFlowStage] = useState<string>("Waiting");
+  const [liveAppointments, setLiveAppointments] = useState<Appointment[]>(MOCK_APPOINTMENTS);
+
+  React.useEffect(() => {
+    appointmentsApi.list().then((list) => {
+      if (list && list.length > 0) {
+        setLiveAppointments(
+          list.map((a) => ({
+            id: a.id,
+            hospital_id: "",
+            patient_id: a.patient_id,
+            doctor_id: a.doctor_id,
+            department_id: "dept_gen",
+            patient_name: `Patient #${a.token_number}`,
+            patient_uhid: `UHID-${a.token_number}`,
+            doctor_name: "Attending Consultant",
+            department_name: "General Medicine",
+            appointment_date: a.appointment_date,
+            appointment_time: a.slot_start_time,
+            token_number: String(a.token_number),
+            status: a.status,
+            priority: a.priority,
+            is_teleconsult: false,
+          }))
+        );
+      }
+    }).catch(() => {});
+  }, []);
 
   const flowStages = [
     { name: "Registration", count: 12 },
@@ -251,7 +279,7 @@ export default function DashboardPage() {
             </a>
           </div>
           <Table
-            data={MOCK_APPOINTMENTS}
+            data={liveAppointments}
             columns={aptColumns}
             keyExtractor={(a) => a.id}
             pageSize={5}

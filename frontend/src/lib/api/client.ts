@@ -1,265 +1,252 @@
-import {
-  Patient,
-  Appointment,
-  QueueToken,
-  Bed,
-  Invoice,
-  LabOrder,
-  Medicine,
-  InsuranceClaim,
-} from "@/types";
-import {
-  MOCK_PATIENTS,
-  MOCK_APPOINTMENTS,
-  MOCK_QUEUE,
-  MOCK_BEDS,
-  MOCK_INVOICES,
-  MOCK_LAB_ORDERS,
-  MOCK_MEDICINES,
-  MOCK_INSURANCE_CLAIMS,
-} from "../mock/data";
+/**
+ * RaftraCare HospitalOS — Production HTTP API Client
+ * Enterprise-grade client wired directly to FastAPI backend (/api/v1).
+ * Features automatic Bearer JWT injection, X-Hospital-ID multi-tenancy header,
+ * typed ApiError wrapping, and token refresh handling.
+ */
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
-// Local in-memory store initialized from mock data to allow real CRUD (e.g. adding patients, booking appointments, bed updates)
-class MockStore {
-  patients = [...MOCK_PATIENTS];
-  appointments = [...MOCK_APPOINTMENTS];
-  queue = [...MOCK_QUEUE];
-  beds = [...MOCK_BEDS];
-  invoices = [...MOCK_INVOICES];
-  labOrders = [...MOCK_LAB_ORDERS];
-  medicines = [...MOCK_MEDICINES];
-  claims = [...MOCK_INSURANCE_CLAIMS];
+export class ApiError extends Error {
+  status: number;
+  code?: string;
+  details?: any;
 
-  addPatient(patient: Omit<Patient, "id" | "uhid" | "created_at">): Patient {
-    const count = this.patients.length + 1;
-    const uhid = `HOS-${String(1284 + count).padStart(6, "0")}`;
-    const newPatient: Patient = {
-      ...patient,
-      id: `pat_${Date.now()}`,
-      uhid,
-      created_at: new Date().toISOString(),
-      last_visit_date: new Date().toISOString().split("T")[0],
-    };
-    this.patients.unshift(newPatient);
-    return newPatient;
+  constructor(message: string, status: number, code?: string, details?: any) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+    this.details = details;
   }
 
-  addAppointment(apt: Omit<Appointment, "id" | "token_number">): Appointment {
-    const tokenNumber = `T-${Math.floor(100 + Math.random() * 900)}`;
-    const newApt: Appointment = {
-      ...apt,
-      id: `apt_${Date.now()}`,
-      token_number: tokenNumber,
-    };
-    this.appointments.unshift(newApt);
-
-    // Also add to queue
-    const newQueueItem: QueueToken = {
-      id: `tok_${Date.now()}`,
-      token_number: tokenNumber,
-      patient_id: apt.patient_id,
-      patient_name: apt.patient_name,
-      patient_uhid: apt.patient_uhid,
-      patient_age: 40,
-      patient_gender: "MALE",
-      doctor_id: apt.doctor_id,
-      doctor_name: apt.doctor_name,
-      department_id: apt.department_id,
-      department_name: apt.department_name,
-      room_number: "Room 101",
-      status: "WAITING",
-      priority: apt.priority,
-      estimated_wait_minutes: 15,
-      checked_in_at: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-    this.queue.push(newQueueItem);
-    return newApt;
+  get isNetworkError(): boolean {
+    return this.status === 0;
   }
 
-  updateTokenStatus(tokenId: string, status: QueueToken["status"]): QueueToken | null {
-    const item = this.queue.find((q) => q.id === tokenId);
-    if (item) {
-      item.status = status;
-      return { ...item };
-    }
-    return null;
-  }
-
-  updateBedStatus(bedId: string, status: Bed["status"]): Bed | null {
-    const bed = this.beds.find((b) => b.id === bedId);
-    if (bed) {
-      bed.status = status;
-      if (status === "AVAILABLE" || status === "CLEANING") {
-        bed.current_patient_id = undefined;
-        bed.current_patient_name = undefined;
-        bed.current_patient_uhid = undefined;
-      }
-      return { ...bed };
-    }
-    return null;
-  }
-
-  addInvoice(inv: Omit<Invoice, "id" | "invoice_number" | "created_at">): Invoice {
-    const invNum = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-    const newInv: Invoice = {
-      ...inv,
-      id: `inv_${Date.now()}`,
-      invoice_number: invNum,
-      created_at: new Date().toISOString(),
-    };
-    this.invoices.unshift(newInv);
-    return newInv;
+  get isAuthError(): boolean {
+    return this.status === 401 || this.status === 403;
   }
 }
 
-export const mockStore = new MockStore();
+// Token helper accessors
+export function getStoredToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("raftracare_access_token");
+}
 
-// Universal API Client with automatic graceful fallback
-export const api = {
-  // Patients
-  async getPatients(search?: string): Promise<Patient[]> {
-    try {
-      const res = await fetch(`${API_BASE}/patients/?search=${encodeURIComponent(search || "")}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("hospitalos-token") || ""}` },
-      });
-      if (!res.ok) throw new Error("Backend response error");
-      const json = await res.json();
-      return json.data || json;
-    } catch {
-      let list = mockStore.patients;
-      if (search) {
-        const q = search.toLowerCase();
-        list = list.filter(
-          (p) =>
-            p.first_name.toLowerCase().includes(q) ||
-            p.last_name.toLowerCase().includes(q) ||
-            p.uhid.toLowerCase().includes(q) ||
-            p.phone.includes(q)
-        );
+export function getStoredRefreshToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("raftracare_refresh_token");
+}
+
+export function getStoredHospitalId(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("raftracare_hospital_id");
+}
+
+export function setStoredTokens(accessToken: string, refreshToken?: string, hospitalId?: string) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("raftracare_access_token", accessToken);
+  if (refreshToken) {
+    localStorage.setItem("raftracare_refresh_token", refreshToken);
+  }
+  if (hospitalId) {
+    localStorage.setItem("raftracare_hospital_id", hospitalId);
+  }
+}
+
+export function clearStoredAuth() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem("raftracare_access_token");
+  localStorage.removeItem("raftracare_refresh_token");
+  localStorage.removeItem("raftracare_user");
+  localStorage.removeItem("raftracare_hospital_id");
+}
+
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+function subscribeTokenRefresh(cb: (token: string) => void) {
+  refreshSubscribers.push(cb);
+}
+
+function onRefreshed(token: string) {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+}
+
+async function tryRefreshToken(): Promise<string | null> {
+  const refresh = getStoredRefreshToken();
+  if (!refresh) return null;
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refresh }),
+    });
+
+    if (!res.ok) {
+      clearStoredAuth();
+      return null;
+    }
+
+    const data = await res.json();
+    const newAccessToken = data.data?.access_token || data.access_token;
+    const newRefreshToken = data.data?.refresh_token || data.refresh_token;
+
+    if (newAccessToken) {
+      setStoredTokens(newAccessToken, newRefreshToken);
+      return newAccessToken;
+    }
+    return null;
+  } catch {
+    clearStoredAuth();
+    return null;
+  }
+}
+
+/**
+ * Universal fetch wrapper with authentication, hospital tenancy, and error mapping
+ */
+export async function apiClient<T = any>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const url = endpoint.startsWith("http") ? endpoint : `${API_BASE}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
+
+  const token = getStoredToken();
+  const hospitalId = getStoredHospitalId();
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  if (hospitalId) {
+    headers["X-Hospital-ID"] = hospitalId;
+  }
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
+
+    // Handle 401 Unauthorized with token refresh
+    if (response.status === 401 && !endpoint.includes("/auth/login") && !endpoint.includes("/auth/refresh")) {
+      if (!isRefreshing) {
+        isRefreshing = true;
+        const newToken = await tryRefreshToken();
+        isRefreshing = false;
+
+        if (newToken) {
+          onRefreshed(newToken);
+          headers["Authorization"] = `Bearer ${newToken}`;
+          const retryRes = await fetch(url, { ...options, headers });
+          if (!retryRes.ok) {
+            const errData = await retryRes.json().catch(() => ({}));
+            throw new ApiError(
+              errData.error?.message || errData.message || "Request failed after authentication refresh",
+              retryRes.status,
+              errData.error?.code,
+              errData
+            );
+          }
+          const retryJson = await retryRes.json();
+          return retryJson.data !== undefined ? retryJson.data : retryJson;
+        } else {
+          // Token refresh failed, force logout
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("raftracare:unauthorized"));
+          }
+          throw new ApiError("Session expired. Please log in again.", 401, "SESSION_EXPIRED");
+        }
+      } else {
+        // Wait for active refresh
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh(async (newToken) => {
+            headers["Authorization"] = `Bearer ${newToken}`;
+            try {
+              const retryRes = await fetch(url, { ...options, headers });
+              const retryJson = await retryRes.json();
+              resolve(retryJson.data !== undefined ? retryJson.data : retryJson);
+            } catch (e) {
+              reject(e);
+            }
+          });
+        });
       }
-      return list;
     }
-  },
 
-  async getPatientById(id: string): Promise<Patient | undefined> {
-    try {
-      const res = await fetch(`${API_BASE}/patients/${id}`);
-      if (!res.ok) throw new Error("Backend response error");
-      const json = await res.json();
-      return json.data || json;
-    } catch {
-      return mockStore.patients.find((p) => p.id === id || p.uhid === id);
+    if (!response.ok) {
+      let errorBody: any = {};
+      try {
+        errorBody = await response.json();
+      } catch {
+        // Not JSON
+      }
+
+      const message =
+        errorBody.error?.message ||
+        errorBody.message ||
+        errorBody.detail ||
+        `Hospital server returned error ${response.status} (${response.statusText})`;
+
+      const code = errorBody.error?.code || errorBody.code || `HTTP_${response.status}`;
+      throw new ApiError(message, response.status, code, errorBody);
     }
-  },
 
-  async createPatient(patient: Omit<Patient, "id" | "uhid" | "created_at">): Promise<Patient> {
-    try {
-      const res = await fetch(`${API_BASE}/patients/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patient),
-      });
-      if (!res.ok) throw new Error("Backend response error");
-      const json = await res.json();
-      return json.data || json;
-    } catch {
-      return mockStore.addPatient(patient);
+    // 204 No Content
+    if (response.status === 204) {
+      return {} as T;
     }
-  },
 
-  // Appointments
-  async getAppointments(): Promise<Appointment[]> {
-    try {
-      const res = await fetch(`${API_BASE}/appointments/`);
-      if (!res.ok) throw new Error("Backend response error");
-      const json = await res.json();
-      return json.data || json;
-    } catch {
-      return mockStore.appointments;
+    const json = await response.json();
+    // Support standard FastAPI envelope { success: true, data: ..., meta: ... }
+    return json.data !== undefined ? json.data : json;
+  } catch (err: any) {
+    if (err instanceof ApiError) {
+      throw err;
     }
-  },
+    // Network failure (server down, connection refused, CORS error)
+    throw new ApiError(
+      err.message === "Failed to fetch"
+        ? "Unable to connect to hospital server. Please ensure the backend service is running."
+        : err.message || "An unexpected network error occurred",
+      0,
+      "NETWORK_ERROR",
+      err
+    );
+  }
+}
 
-  async createAppointment(apt: Omit<Appointment, "id" | "token_number">): Promise<Appointment> {
-    try {
-      const res = await fetch(`${API_BASE}/appointments/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(apt),
-      });
-      if (!res.ok) throw new Error("Backend response error");
-      const json = await res.json();
-      return json.data || json;
-    } catch {
-      return mockStore.addAppointment(apt);
-    }
-  },
-
-  // Queue & Token
-  async getQueue(): Promise<QueueToken[]> {
-    try {
-      const res = await fetch(`${API_BASE}/appointments/queue`);
-      if (!res.ok) throw new Error("Backend response error");
-      const json = await res.json();
-      return json.data || json;
-    } catch {
-      return mockStore.queue;
-    }
-  },
-
-  async updateQueueStatus(tokenId: string, status: QueueToken["status"]): Promise<QueueToken | null> {
-    try {
-      const res = await fetch(`${API_BASE}/appointments/${tokenId}/queue`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
-      if (!res.ok) throw new Error("Backend response error");
-      const json = await res.json();
-      return json.data || json;
-    } catch {
-      return mockStore.updateTokenStatus(tokenId, status);
-    }
-  },
-
-  // Beds & Wards
-  async getBeds(): Promise<Bed[]> {
-    return mockStore.beds;
-  },
-
-  async updateBed(bedId: string, status: Bed["status"]): Promise<Bed | null> {
-    return mockStore.updateBedStatus(bedId, status);
-  },
-
-  // Invoices & Billing
-  async getInvoices(): Promise<Invoice[]> {
-    try {
-      const res = await fetch(`${API_BASE}/billing/invoices`);
-      if (!res.ok) throw new Error("Backend response error");
-      const json = await res.json();
-      return json.data || json;
-    } catch {
-      return mockStore.invoices;
-    }
-  },
-
-  async createInvoice(inv: Omit<Invoice, "id" | "invoice_number" | "created_at">): Promise<Invoice> {
-    return mockStore.addInvoice(inv);
-  },
-
-  // Lab Orders
-  async getLabOrders(): Promise<LabOrder[]> {
-    return mockStore.labOrders;
-  },
-
-  // Pharmacy & Inventory
-  async getMedicines(): Promise<Medicine[]> {
-    return mockStore.medicines;
-  },
-
-  // Insurance
-  async getInsuranceClaims(): Promise<InsuranceClaim[]> {
-    return mockStore.claims;
-  },
+export const http = {
+  get: <T>(endpoint: string, options?: RequestInit) =>
+    apiClient<T>(endpoint, { ...options, method: "GET" }),
+  post: <T>(endpoint: string, body?: any, options?: RequestInit) =>
+    apiClient<T>(endpoint, {
+      ...options,
+      method: "POST",
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    }),
+  put: <T>(endpoint: string, body?: any, options?: RequestInit) =>
+    apiClient<T>(endpoint, {
+      ...options,
+      method: "PUT",
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    }),
+  patch: <T>(endpoint: string, body?: any, options?: RequestInit) =>
+    apiClient<T>(endpoint, {
+      ...options,
+      method: "PATCH",
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    }),
+  delete: <T>(endpoint: string, options?: RequestInit) =>
+    apiClient<T>(endpoint, { ...options, method: "DELETE" }),
 };

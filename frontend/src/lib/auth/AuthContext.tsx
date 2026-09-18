@@ -1,7 +1,18 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { User, Hospital, UserRole } from "@/types";
+import {
+  authApi,
+  LoginPayload,
+} from "@/lib/api/auth";
+import {
+  getStoredToken,
+  getStoredRefreshToken,
+  getStoredHospitalId,
+  setStoredTokens,
+  clearStoredAuth,
+} from "@/lib/api/client";
 
 export interface AuthContextType {
   user: User | null;
@@ -10,308 +21,474 @@ export interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password?: string, roleOverride?: UserRole) => Promise<boolean>;
-  logout: () => void;
-  switchRole: (newRole: UserRole) => void;
-  switchHospital: (hospitalId: string) => void;
+  login: (email: string, password: string, hospitalSlug?: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  switchHospital: (hospitalId: string) => Promise<boolean>;
   addHospital: (newFacility: Partial<Hospital>) => Hospital;
   hasRole: (roles: UserRole[]) => boolean;
+  hasPermission: (permission: string) => boolean;
 }
-
-export const DEFAULT_HOSPITALS: Hospital[] = [
-  {
-    id: "hosp_metro_01",
-    name: "Metro General Hospital",
-    branch_name: "Downtown Main Campus (Flagship)",
-    organization_id: "org_metro",
-    organization_name: "Metro Health Systems",
-    code: "MGH-DT",
-    slug: "metro-general",
-    email: "admin@metrogeneral.org",
-    phone: "+91 98765 43210",
-    address_line: "Plot 42, Healthcare Avenue, Sector 18",
-    city: "Gurugram",
-    state: "Haryana",
-    pincode: "122002",
-    subscription_tier: "GROWTH",
-    subscription_status: "ACTIVE",
-    max_beds: 240,
-    is_main_branch: true,
-    total_branches: 2,
-  },
-  {
-    id: "hosp_metro_02",
-    name: "Metro Care Clinic",
-    branch_name: "West Wing Outpatient Center",
-    organization_id: "org_metro",
-    organization_name: "Metro Health Systems",
-    code: "MGH-WW",
-    slug: "metro-care-west",
-    email: "westwing@metrogeneral.org",
-    phone: "+91 98765 43211",
-    address_line: "Ground Floor, City Galleria, Golf Course Road",
-    city: "Gurugram",
-    state: "Haryana",
-    pincode: "122009",
-    subscription_tier: "GROWTH",
-    subscription_status: "ACTIVE",
-    max_beds: 45,
-    is_main_branch: false,
-    total_branches: 2,
-  },
-  {
-    id: "hosp_apex_01",
-    name: "Apex Super Speciality Hospital",
-    branch_name: "South Extension Flagship",
-    organization_id: "org_apex",
-    organization_name: "Apex Healthcare Group",
-    code: "ASSH-DEL",
-    slug: "apex-south-delhi",
-    email: "contact@apexhealthcare.in",
-    phone: "+91 11 4987 6543",
-    address_line: "Ring Road, South Extension Part II",
-    city: "New Delhi",
-    state: "Delhi",
-    pincode: "110049",
-    subscription_tier: "ENTERPRISE",
-    subscription_status: "ACTIVE",
-    max_beds: 450,
-    is_main_branch: true,
-    total_branches: 1,
-  },
-];
-
-const DEFAULT_USERS_BY_ROLE: Record<UserRole, User> = {
-  SUPER_ADMIN: {
-    id: "usr_super_01",
-    email: "superadmin@raftracare.io",
-    first_name: "Vikram",
-    last_name: "Mehta",
-    role: "SUPER_ADMIN",
-    hospital_id: "hosp_metro_01",
-    is_active: true,
-  },
-  HOSPITAL_ADMIN: {
-    id: "usr_admin_01",
-    email: "admin@metrogeneral.org",
-    first_name: "Dr. Arvind",
-    last_name: "Srivastava",
-    role: "HOSPITAL_ADMIN",
-    hospital_id: "hosp_metro_01",
-    is_active: true,
-  },
-  DOCTOR: {
-    id: "usr_doc_01",
-    email: "dr.sharma@metrogeneral.org",
-    first_name: "Dr. Rajesh",
-    last_name: "Sharma",
-    role: "DOCTOR",
-    hospital_id: "hosp_metro_01",
-    department_id: "dept_cardio_01",
-    is_active: true,
-  },
-  NURSE: {
-    id: "usr_nurse_01",
-    email: "ananya.nurse@metrogeneral.org",
-    first_name: "Ananya",
-    last_name: "Iyer",
-    role: "NURSE",
-    hospital_id: "hosp_metro_01",
-    department_id: "dept_gen_ward",
-    is_active: true,
-  },
-  RECEPTIONIST: {
-    id: "usr_front_01",
-    email: "priya.frontdesk@metrogeneral.org",
-    first_name: "Priya",
-    last_name: "Verma",
-    role: "RECEPTIONIST",
-    hospital_id: "hosp_metro_01",
-    is_active: true,
-  },
-  PHARMACIST: {
-    id: "usr_pharm_01",
-    email: "sunil.pharm@metrogeneral.org",
-    first_name: "Sunil",
-    last_name: "Nair",
-    role: "PHARMACIST",
-    hospital_id: "hosp_metro_01",
-    is_active: true,
-  },
-  LAB_TECHNICIAN: {
-    id: "usr_lab_01",
-    email: "manoj.lab@metrogeneral.org",
-    first_name: "Manoj",
-    last_name: "Patel",
-    role: "LAB_TECHNICIAN",
-    hospital_id: "hosp_metro_01",
-    is_active: true,
-  },
-  ACCOUNTANT: {
-    id: "usr_acc_01",
-    email: "deepak.accounts@metrogeneral.org",
-    first_name: "Deepak",
-    last_name: "Jain",
-    role: "ACCOUNTANT",
-    hospital_id: "hosp_metro_01",
-    is_active: true,
-  },
-  PATIENT: {
-    id: "usr_patient_01",
-    email: "raj.kumar@example.com",
-    first_name: "Raj",
-    last_name: "Kumar",
-    role: "PATIENT",
-    hospital_id: "hosp_metro_01",
-    is_active: true,
-  },
-};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Role to default permissions mapping matching backend permissions.py
+const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
+  SUPER_ADMIN: ["*"],
+  HOSPITAL_ADMIN: [
+    "hospitals:read",
+    "hospitals:update",
+    "hospitals:billing",
+    "subscriptions:manage",
+    "staff:read",
+    "staff:write",
+    "staff:manage",
+    "staff:delete",
+    "patients:read",
+    "patients:write",
+    "emr:read",
+    "appointments:read",
+    "appointments:write",
+    "appointments:cancel",
+    "queue:read",
+    "queue:manage",
+    "prescriptions:read",
+    "pharmacy:read",
+    "pharmacy:inventory",
+    "lab:read",
+    "radiology:read",
+    "wards:read",
+    "wards:manage",
+    "admissions:read",
+    "invoices:read",
+    "invoices:write",
+    "payments:process",
+    "payments:refund",
+    "reports:financial",
+    "insurance:read",
+    "insurance:write",
+    "audit:read",
+    "admin:settings",
+  ],
+  DOCTOR: [
+    "patients:read",
+    "patients:write",
+    "emr:read",
+    "emr:write",
+    "appointments:read",
+    "appointments:write",
+    "queue:read",
+    "queue:manage",
+    "prescriptions:read",
+    "prescriptions:write",
+    "lab:read",
+    "lab:order",
+    "radiology:read",
+    "radiology:order",
+    "wards:read",
+    "admissions:read",
+    "admissions:write",
+  ],
+  NURSE: [
+    "patients:read",
+    "emr:read",
+    "emr:write",
+    "appointments:read",
+    "queue:read",
+    "prescriptions:read",
+    "wards:read",
+    "admissions:read",
+    "admissions:write",
+  ],
+  RECEPTIONIST: [
+    "patients:read",
+    "patients:write",
+    "appointments:read",
+    "appointments:write",
+    "appointments:cancel",
+    "queue:read",
+    "queue:manage",
+    "invoices:read",
+    "invoices:write",
+    "payments:process",
+  ],
+  PHARMACIST: [
+    "patients:read",
+    "prescriptions:read",
+    "pharmacy:read",
+    "pharmacy:dispense",
+    "pharmacy:inventory",
+    "invoices:read",
+    "invoices:write",
+    "payments:process",
+  ],
+  LAB_TECHNICIAN: [
+    "patients:read",
+    "lab:read",
+    "lab:order",
+    "lab:results_write",
+  ],
+  ACCOUNTANT: [
+    "patients:read",
+    "invoices:read",
+    "invoices:write",
+    "payments:process",
+    "reports:financial",
+    "insurance:read",
+    "insurance:write",
+  ],
+  PATIENT: [
+    "patients:read",
+    "emr:read",
+    "appointments:read",
+    "appointments:write",
+    "appointments:cancel",
+    "prescriptions:read",
+    "lab:read",
+    "radiology:read",
+    "invoices:read",
+  ],
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [availableHospitals, setAvailableHospitals] = useState<Hospital[]>(DEFAULT_HOSPITALS);
-  const [hospital, setHospital] = useState<Hospital | null>(DEFAULT_HOSPITALS[0]);
+  const [hospital, setHospital] = useState<Hospital | null>(null);
+  const [availableHospitals, setAvailableHospitals] = useState<Hospital[]>([]);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    // Check localStorage on boot
-    const isLoggedOut = localStorage.getItem("raftracare-logged-out") === "true";
-    const storedUser = localStorage.getItem("raftracare-user") || localStorage.getItem("hospitalos-user");
-    const storedToken = localStorage.getItem("raftracare-token") || localStorage.getItem("hospitalos-token");
-    const storedHospitalId = localStorage.getItem("raftracare-active-hospital-id");
+  const restoreSession = useCallback(async () => {
+    setIsLoading(true);
+    const storedToken = getStoredToken();
+    const storedUserStr =
+      typeof window !== "undefined"
+        ? localStorage.getItem("raftracare_user_profile")
+        : null;
+    const storedHospStr =
+      typeof window !== "undefined"
+        ? localStorage.getItem("raftracare_hospital_profile")
+        : null;
 
-    // Load saved hospitals or default
-    const savedHospitals = localStorage.getItem("raftracare-hospitals");
-    let allHospitals = DEFAULT_HOSPITALS;
-    if (savedHospitals) {
-      try {
-        allHospitals = JSON.parse(savedHospitals);
-        setAvailableHospitals(allHospitals);
-      } catch {
-        // use defaults
-      }
-    }
-
-    if (storedHospitalId) {
-      const matched = allHospitals.find((h) => h.id === storedHospitalId);
-      if (matched) setHospital(matched);
-    }
-
-    if (isLoggedOut) {
+    if (!storedToken && !storedUserStr) {
       setUser(null);
       setToken(null);
-    } else if (storedUser && storedToken) {
+      setHospital(null);
+      setIsLoading(false);
+      return;
+    }
+
+    if (storedUserStr) {
       try {
-        setUser(JSON.parse(storedUser));
-        setToken(storedToken);
-      } catch {
-        const defaultUser = DEFAULT_USERS_BY_ROLE.HOSPITAL_ADMIN;
-        setUser(defaultUser);
-        setToken("mock_jwt_token_hospital_admin");
+        const parsedUser = JSON.parse(storedUserStr);
+        setUser(parsedUser);
+      } catch {}
+    }
+
+    if (storedHospStr) {
+      try {
+        const parsedHosp = JSON.parse(storedHospStr);
+        setHospital(parsedHosp);
+        setAvailableHospitals([parsedHosp]);
+      } catch {}
+    }
+
+    if (storedToken) {
+      setToken(storedToken);
+      try {
+        const me = await authApi.getMe();
+        if (me && me.id) {
+          const fullUser: User = {
+            id: me.id,
+            email: me.email,
+            first_name: me.first_name,
+            last_name: me.last_name,
+            role: me.role,
+            hospital_id: me.hospital_id || "",
+            department_id: undefined,
+            is_active: true,
+          };
+          setUser(fullUser);
+          localStorage.setItem("raftracare_user_profile", JSON.stringify(fullUser));
+
+          if (me.hospital) {
+            const activeHosp: Hospital = {
+              id: me.hospital.id,
+              name: me.hospital.name,
+              code: me.hospital.code,
+              slug: me.hospital.slug,
+              email: me.hospital.email || me.email,
+              phone: me.hospital.phone || "",
+              address_line: "",
+              city: me.hospital.city || "",
+              state: me.hospital.state || "",
+              pincode: "",
+              subscription_tier: "GROWTH",
+              subscription_status: "ACTIVE",
+              max_beds: 100,
+              is_main_branch: true,
+            };
+            setHospital(activeHosp);
+            localStorage.setItem("raftracare_hospital_profile", JSON.stringify(activeHosp));
+          }
+
+          if (me.available_facilities && Array.isArray(me.available_facilities)) {
+            const mappedFacs: Hospital[] = me.available_facilities.map((f: any) => ({
+              id: f.id,
+              name: f.name,
+              code: f.code,
+              slug: f.slug,
+              email: f.email || me.email,
+              phone: f.phone || "",
+              address_line: f.address_line1 || "",
+              city: f.city || "",
+              state: f.state || "",
+              pincode: f.postal_code || "",
+              subscription_tier: "GROWTH",
+              subscription_status: "ACTIVE",
+              max_beds: 100,
+              is_main_branch: false,
+            }));
+            setAvailableHospitals(mappedFacs);
+          }
+        }
+      } catch (err: any) {
+        if (err?.status === 401) {
+          clearStoredAuth();
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("raftracare_user_profile");
+            localStorage.removeItem("raftracare_hospital_profile");
+          }
+          setUser(null);
+          setToken(null);
+          setHospital(null);
+        }
       }
-    } else {
-      // Default initial session for immediate exploration
-      const defaultUser = DEFAULT_USERS_BY_ROLE.HOSPITAL_ADMIN;
-      setUser(defaultUser);
-      setToken("mock_jwt_token_hospital_admin");
-      localStorage.setItem("raftracare-user", JSON.stringify(defaultUser));
-      localStorage.setItem("raftracare-token", "mock_jwt_token_hospital_admin");
     }
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password?: string, roleOverride?: UserRole): Promise<boolean> => {
+  useEffect(() => {
+    restoreSession();
+
+    // Listen for global unauthorized events (e.g. from apiClient on expired token)
+    const handleUnauthorized = () => {
+      logout();
+    };
+    window.addEventListener("raftracare:unauthorized", handleUnauthorized);
+    return () => {
+      window.removeEventListener("raftracare:unauthorized", handleUnauthorized);
+    };
+  }, [restoreSession]);
+
+  const login = async (
+    email: string,
+    password: string,
+    hospitalSlug?: string
+  ): Promise<boolean> => {
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 500)); // Smooth realistic latency
+    try {
+      // Production Auth: strictly validated server-side
+      const res = await authApi.login({
+        email,
+        password,
+        hospital_slug: hospitalSlug,
+      });
 
-    localStorage.removeItem("raftracare-logged-out");
+      if (!res.tokens?.access_token || !res.user) {
+        throw new Error("Invalid authentication response received from server");
+      }
 
-    const targetRole = roleOverride || "HOSPITAL_ADMIN";
-    const loggedUser = DEFAULT_USERS_BY_ROLE[targetRole] || DEFAULT_USERS_BY_ROLE.HOSPITAL_ADMIN;
-    
-    // Customize email if user typed one
-    const userToSave = { ...loggedUser, email: email || loggedUser.email };
-    const mockToken = `jwt_token_${targetRole.toLowerCase()}_${Date.now()}`;
+      const accessToken = res.tokens.access_token;
+      const refreshToken = res.tokens.refresh_token;
 
-    setUser(userToSave);
-    setToken(mockToken);
-    localStorage.setItem("raftracare-user", JSON.stringify(userToSave));
-    localStorage.setItem("raftracare-token", mockToken);
-    localStorage.setItem("hospitalos-user", JSON.stringify(userToSave));
-    localStorage.setItem("hospitalos-token", mockToken);
-    setIsLoading(false);
-    return true;
+      const userObj: User = {
+        id: res.user.id,
+        email: res.user.email,
+        first_name: res.user.first_name,
+        last_name: res.user.last_name,
+        role: res.user.role,
+        hospital_id: res.user.hospital_id || "",
+        is_active: true,
+      };
+
+      const activeHosp: Hospital = {
+        id: res.user.hospital_id || `hosp_${res.user.id.slice(0, 8)}`,
+        name: res.user.hospital_name || "Primary Medical Facility",
+        code: "HOSP",
+        slug: res.user.hospital_slug || hospitalSlug || "primary-facility",
+        email: res.user.email,
+        phone: "+91 98765 43210",
+        address_line: "Healthcare Complex",
+        city: "Metropolitan",
+        state: "State",
+        pincode: "110001",
+        subscription_tier: "GROWTH",
+        subscription_status: "ACTIVE",
+        max_beds: 200,
+        is_main_branch: true,
+      };
+
+      setStoredTokens(accessToken, refreshToken, userObj.hospital_id);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("raftracare_user_profile", JSON.stringify(userObj));
+        localStorage.setItem("raftracare_hospital_profile", JSON.stringify(activeHosp));
+      }
+
+      setToken(accessToken);
+      setUser(userObj);
+      setHospital(activeHosp);
+      setAvailableHospitals([activeHosp]);
+
+      // Fetch all facilities authorized for this user
+      try {
+        const facs = await authApi.getFacilities();
+        if (facs && Array.isArray(facs) && facs.length > 0) {
+          const mapped: Hospital[] = facs.map((f: any) => ({
+            id: f.id,
+            name: f.name,
+            code: f.code,
+            slug: f.slug,
+            email: f.email || userObj.email,
+            phone: f.phone || "",
+            address_line: "",
+            city: f.city || "",
+            state: f.state || "",
+            pincode: "",
+            subscription_tier: "GROWTH",
+            subscription_status: "ACTIVE",
+            max_beds: 100,
+            is_main_branch: false,
+          }));
+          setAvailableHospitals(mapped);
+        }
+      } catch {}
+
+      return true;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const logout = () => {
+  const logout = useCallback(async () => {
+    const refreshToken = getStoredRefreshToken();
+    try {
+      if (refreshToken) {
+        await authApi.logout(refreshToken);
+      }
+    } catch {}
+
+    clearStoredAuth();
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("raftracare_user_profile");
+      localStorage.removeItem("raftracare_hospital_profile");
+    }
     setUser(null);
+    setHospital(null);
     setToken(null);
-    localStorage.setItem("raftracare-logged-out", "true");
-    localStorage.removeItem("raftracare-user");
-    localStorage.removeItem("raftracare-token");
-    localStorage.removeItem("hospitalos-user");
-    localStorage.removeItem("hospitalos-token");
     if (typeof window !== "undefined") {
       window.location.href = "/login";
     }
-  };
+  }, []);
 
-  const switchRole = (newRole: UserRole) => {
-    const newUser = DEFAULT_USERS_BY_ROLE[newRole];
-    if (newUser) {
-      setUser(newUser);
-      localStorage.setItem("raftracare-user", JSON.stringify(newUser));
-      localStorage.setItem("hospitalos-user", JSON.stringify(newUser));
-    }
-  };
+  const switchHospital = async (hospitalId: string): Promise<boolean> => {
+    try {
+      const res = await authApi.switchHospital(hospitalId);
+      if (res && res.tokens?.access_token) {
+        setStoredTokens(res.tokens.access_token, res.tokens.refresh_token, hospitalId);
+        setToken(res.tokens.access_token);
 
-  const switchHospital = (hospitalId: string) => {
-    const target = availableHospitals.find((h) => h.id === hospitalId);
-    if (target) {
-      setHospital(target);
-      localStorage.setItem("raftracare-active-hospital-id", target.id);
+        if (res.hospital) {
+          const updatedHosp: Hospital = {
+            id: res.hospital.id,
+            name: res.hospital.name,
+            code: res.hospital.code,
+            slug: res.hospital.slug,
+            email: user?.email || "",
+            phone: "",
+            address_line: "",
+            city: "",
+            state: "",
+            pincode: "",
+            subscription_tier: "GROWTH",
+            subscription_status: "ACTIVE",
+            max_beds: 100,
+            is_main_branch: false,
+          };
+          setHospital(updatedHosp);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("raftracare_hospital_profile", JSON.stringify(updatedHosp));
+          }
+        }
+
+        if (user && res.role) {
+          const updatedUser: User = {
+            ...user,
+            role: res.role,
+            hospital_id: hospitalId,
+          };
+          setUser(updatedUser);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("raftracare_user_profile", JSON.stringify(updatedUser));
+          }
+        }
+
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("raftracare:hospital_changed", { detail: { hospitalId } })
+          );
+        }
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("Failed to switch facility context:", err);
+      return false;
     }
   };
 
   const addHospital = (newFacility: Partial<Hospital>): Hospital => {
-    const generatedId = `hosp_${Date.now()}`;
-    const facility: Hospital = {
-      id: generatedId,
-      name: newFacility.name || "New Hospital Facility",
-      branch_name: newFacility.branch_name || "Main Branch",
-      organization_id: newFacility.organization_id || "org_custom",
-      organization_name: newFacility.organization_name || newFacility.name || "Independent Health Org",
-      code: newFacility.code || `FAC-${Math.floor(100 + Math.random() * 900)}`,
-      slug: (newFacility.name || "new-facility").toLowerCase().replace(/\s+/g, "-"),
-      email: newFacility.email || "info@hospital.org",
-      phone: newFacility.phone || "+91 90000 00000",
-      address_line: newFacility.address_line || "Healthcare District",
-      city: newFacility.city || "New Delhi",
-      state: newFacility.state || "Delhi",
-      pincode: newFacility.pincode || "110001",
-      subscription_tier: (newFacility.subscription_tier as any) || "GROWTH",
-      subscription_status: "ACTIVE",
+    const created: Hospital = {
+      id: newFacility.id || `hosp_${Date.now()}`,
+      name: newFacility.name || "New Facility",
+      code: newFacility.code || "HOSP",
+      slug: newFacility.slug || "new-facility",
+      email: newFacility.email || "",
+      phone: newFacility.phone || "",
+      address_line: newFacility.address_line || "",
+      city: newFacility.city || "",
+      state: newFacility.state || "",
+      pincode: newFacility.pincode || "",
+      subscription_tier: newFacility.subscription_tier || "GROWTH",
+      subscription_status: newFacility.subscription_status || "ACTIVE",
       max_beds: newFacility.max_beds || 100,
-      is_main_branch: false,
-      total_branches: 1,
+      organization_id: newFacility.organization_id,
+      organization_name: newFacility.organization_name,
+      branch_name: newFacility.branch_name,
+      is_main_branch: newFacility.is_main_branch ?? false,
     };
-
-    const updated = [...availableHospitals, facility];
-    setAvailableHospitals(updated);
-    setHospital(facility);
-    localStorage.setItem("raftracare-hospitals", JSON.stringify(updated));
-    localStorage.setItem("raftracare-active-hospital-id", facility.id);
-    return facility;
+    setAvailableHospitals((prev) => [...prev, created]);
+    setHospital(created);
+    return created;
   };
 
-  const hasRole = (roles: UserRole[]): boolean => {
-    if (!user) return false;
-    if (user.role === "SUPER_ADMIN" || user.role === "HOSPITAL_ADMIN") return true;
-    return roles.includes(user.role);
-  };
+  const hasRole = useCallback(
+    (roles: UserRole[]): boolean => {
+      if (!user) return false;
+      if (user.role === "SUPER_ADMIN") return true;
+      return roles.includes(user.role);
+    },
+    [user]
+  );
+
+  const hasPermission = useCallback(
+    (permission: string): boolean => {
+      if (!user) return false;
+      if (user.role === "SUPER_ADMIN") return true;
+      const userPerms = ROLE_PERMISSIONS[user.role] || [];
+      if (userPerms.includes("*")) return true;
+      return userPerms.includes(permission);
+    },
+    [user]
+  );
 
   return (
     <AuthContext.Provider
@@ -320,14 +497,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         hospital,
         availableHospitals,
         token,
-        isAuthenticated: !!user,
+        isAuthenticated: !!user && !!token,
         isLoading,
         login,
         logout,
-        switchRole,
         switchHospital,
         addHospital,
         hasRole,
+        hasPermission,
       }}
     >
       {children}
@@ -335,7 +512,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");

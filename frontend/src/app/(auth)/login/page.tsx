@@ -1,58 +1,59 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useToast } from "@/components/ui/Toast";
-import { Eye, EyeOff, Lock, Mail, ArrowRight, ShieldCheck } from "lucide-react";
-import { UserRole } from "@/types";
+import { Eye, EyeOff, Lock, Mail, ArrowRight, ShieldCheck, AlertCircle } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 
-export default function LoginPage() {
-  const [email, setEmail] = useState("admin@metrogeneral.org");
-  const [password, setPassword] = useState("password123");
+function LoginFormContent() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  const searchParams = useSearchParams();
   const { login } = useAuth();
-  const router = useRouter();
-  const { success, error } = useToast();
+  const { success } = useToast();
 
-  const handleLogin = async (e: React.FormEvent, roleOverride?: UserRole) => {
-    if (e) e.preventDefault();
+  useEffect(() => {
+    if (searchParams.get("expired") === "1") {
+      setErrorMsg("Your session has expired. Please sign in again to continue.");
+    }
+  }, [searchParams]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setErrorMsg("");
 
-    if (!email || !password) {
-      setErrorMsg("Please provide your hospital email and password.");
+    if (!email.trim() || !password.trim()) {
+      setErrorMsg("Please provide both email and password.");
       return;
     }
 
     setIsLoading(true);
     try {
-      const ok = await login(email, password, roleOverride);
-      if (ok) {
-        success("Signed In", "Welcome back to RaftraCare operations.");
-        router.push("/dashboard");
+      await login(email.trim(), password);
+      success("Authenticated", "Signed in successfully. Loading hospital workspace...");
+      window.location.href = "/dashboard";
+    } catch (err: any) {
+      if (err.status === 401) {
+        setErrorMsg("Invalid credentials. Please verify your email and password.");
+      } else if (err.status === 0 || err.code === "NETWORK_ERROR") {
+        setErrorMsg("Unable to connect to hospital server. Please verify backend service availability.");
+      } else {
+        setErrorMsg(err.message || "Failed to sign in. Please try again.");
       }
-    } catch {
-      setErrorMsg("Invalid credentials. Please verify your email and password.");
-      error("Authentication Failed", "Invalid credentials.");
     } finally {
       setIsLoading(false);
     }
   };
-
-  const demoRoles: { label: string; role: UserRole; email: string }[] = [
-    { label: "Admin", role: "HOSPITAL_ADMIN", email: "admin@metrogeneral.org" },
-    { label: "Doctor", role: "DOCTOR", email: "dr.sharma@metrogeneral.org" },
-    { label: "Receptionist", role: "RECEPTIONIST", email: "priya.frontdesk@metrogeneral.org" },
-    { label: "Nurse", role: "NURSE", email: "ananya.nurse@metrogeneral.org" },
-    { label: "Pharmacist", role: "PHARMACIST", email: "sunil.pharm@metrogeneral.org" },
-  ];
 
   return (
     <div className="space-y-6">
@@ -63,27 +64,57 @@ export default function LoginPage() {
 
       {/* Header */}
       <div>
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950 text-primary border border-blue-200 dark:border-blue-800 mb-2">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>Hospital Operations Sign In</span>
+        </div>
         <h2 className="text-2xl font-extrabold tracking-tight text-foreground dark:text-foreground-dark">
           Welcome back
         </h2>
         <p className="text-xs text-foreground-muted dark:text-foreground-mutedDark mt-1">
-          Enter your authorized medical facility credentials to sign in
+          Sign in to your hospital operating workspace to manage patient care, clinical orders, and revenue.
         </p>
       </div>
 
-      {/* Error alert if any */}
-      {errorMsg && (
-        <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-xs text-red-700 dark:text-red-300 font-medium">
-          {errorMsg}
+      {/* Quick 1-Click Demo Accounts */}
+      <div className="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/60 text-xs space-y-2">
+        <div className="flex items-center justify-between text-[11px] font-bold text-primary dark:text-blue-400">
+          <span>⚡ Fast Demo Access</span>
+          <span className="text-[10px] font-normal text-foreground-muted">Tap to prefill</span>
         </div>
-      )}
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setEmail("admin@citycare.in");
+              setPassword("Admin@123456");
+            }}
+            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-border dark:border-border-dark text-left hover:border-primary transition-colors text-[11px]"
+          >
+            <div className="font-bold text-foreground">Hospital Admin</div>
+            <div className="text-slate-400 text-[10px] truncate">admin@citycare.in</div>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setEmail("doctor@citycare.in");
+              setPassword("Doctor@123456");
+            }}
+            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-border dark:border-border-dark text-left hover:border-primary transition-colors text-[11px]"
+          >
+            <div className="font-bold text-foreground">Lead Doctor</div>
+            <div className="text-slate-400 text-[10px] truncate">doctor@citycare.in</div>
+          </button>
+        </div>
+      </div>
 
       {/* Form */}
-      <form onSubmit={(e) => handleLogin(e)} className="space-y-4 text-xs">
+      <form onSubmit={handleSubmit} className="space-y-4 text-xs">
         <Input
           label="Hospital Email Address *"
           type="email"
           required
+          autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="name@hospital.org"
@@ -92,9 +123,10 @@ export default function LoginPage() {
 
         <div className="space-y-1">
           <Input
-            label="Security Password *"
+            label="Password *"
             type={showPassword ? "text" : "password"}
             required
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••••••"
@@ -102,8 +134,9 @@ export default function LoginPage() {
             rightIcon={
               <button
                 type="button"
+                tabIndex={-1}
                 onClick={() => setShowPassword(!showPassword)}
-                className="hover:text-foreground focus:outline-none"
+                className="text-foreground-muted hover:text-foreground focus:outline-none"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -117,58 +150,52 @@ export default function LoginPage() {
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="rounded border-border text-primary focus:ring-primary/20"
+              className="rounded border-border text-primary focus:ring-primary h-3.5 w-3.5"
             />
-            Remember this terminal
+            <span>Remember this device</span>
           </label>
-
-          <a
+          <Link
             href="/forgot-password"
-            className="font-semibold text-primary hover:underline"
+            className="text-primary hover:underline font-medium"
           >
             Forgot password?
-          </a>
+          </Link>
         </div>
 
         <Button
           type="submit"
-          size="lg"
           variant="primary"
+          size="lg"
+          className="w-full justify-center text-xs font-bold mt-2"
           isLoading={isLoading}
-          className="w-full mt-2"
         >
-          Sign In to Workspace
+          <span>Sign In to HospitalOS</span>
+          <ArrowRight className="w-4 h-4 ml-1.5" />
         </Button>
       </form>
 
-      {/* Demo Role Fast-Switcher */}
-      <div className="pt-4 border-t border-border dark:border-border-dark space-y-2">
-        <div className="text-[11px] font-semibold text-foreground-muted uppercase tracking-wider text-center">
-          Instant Demo Sign-in As:
-        </div>
-        <div className="flex flex-wrap gap-1.5 justify-center">
-          {demoRoles.map((d) => (
-            <button
-              key={d.role}
-              type="button"
-              onClick={(e) => {
-                setEmail(d.email);
-                handleLogin(e, d.role);
-              }}
-              className="px-2.5 py-1 rounded text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950 text-foreground dark:text-foreground-dark hover:text-primary transition-colors border border-border/80 dark:border-border-dark"
-            >
-              {d.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="text-center text-xs text-foreground-muted">
-        Don&apos;t have a hospital registered?{" "}
-        <a href="/signup" className="font-bold text-primary hover:underline">
-          Register Organization →
-        </a>
+      {/* Register Organization Link */}
+      <div className="pt-4 border-t border-border dark:border-border-dark text-center text-xs text-foreground-muted dark:text-foreground-mutedDark">
+        <span>Need to deploy RaftraCare for a new facility? </span>
+        <Link href="/signup" className="text-primary font-bold hover:underline">
+          Register Hospital
+        </Link>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="h-64 flex flex-col items-center justify-center space-y-3">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-foreground-muted">Loading sign in...</span>
+        </div>
+      }
+    >
+      <LoginFormContent />
+    </React.Suspense>
   );
 }

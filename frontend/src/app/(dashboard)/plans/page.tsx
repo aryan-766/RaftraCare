@@ -39,6 +39,26 @@ export default function PlansBillingPage() {
 
   const plans = [
     {
+      id: "FREE_TRIAL",
+      name: "Free Version (2-Day Usage)",
+      monthly: 0,
+      annual: 0,
+      desc: "For exploring complete hospital workflows and team onboarding with zero commitment.",
+      beds: "Up to 50 Beds",
+      branches: "1 Facility",
+      features: [
+        "48 Hours Full Operations Access",
+        "1 Hospital Facility Location",
+        "Up to 50 Hospital Beds with Live Map",
+        "Front Desk & Token Queue",
+        "OPD Doctor Workstation & Prescriptions",
+        "Laboratory & Pharmacy Dispensing",
+        "Invite Staff & Assign RBAC Roles",
+        "Zero Upfront Credit Card Required",
+      ],
+      current: hospital?.subscription_tier === "FREE_TRIAL" || hospital?.subscription_status === "TRIALING",
+    },
+    {
       id: "STARTER",
       name: "Starter Clinic",
       monthly: 4999,
@@ -187,6 +207,37 @@ export default function PlansBillingPage() {
         </div>
       </div>
 
+      {/* 2-Day Free Trial Notice Banner with Direct Dashboard Button */}
+      <div className="p-4 rounded-xl border border-emerald-500/40 bg-gradient-to-r from-emerald-50 via-teal-50 to-sky-50 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-slate-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-sm text-foreground dark:text-foreground-dark">
+                Free Version for 2 Days Usage Active
+              </span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-200 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200">
+                48 Hours Unlocked
+              </span>
+            </div>
+            <p className="text-xs text-foreground-muted mt-0.5">
+              Welcome to RaftraCare. You have full access to OPD, IPD, Bed Map, Pharmacy, Lab, and Staff Invites.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <a
+            href="/dashboard"
+            className="px-4 py-2 rounded-btn bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-sm transition-colors"
+          >
+            <span>Enter Hospital Dashboard</span>
+            <ArrowRight className="w-4 h-4" />
+          </a>
+        </div>
+      </div>
+
       {/* 2. Key Multi-Tenant Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -297,7 +348,7 @@ export default function PlansBillingPage() {
           </div>
 
           {/* Plan Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             {plans.map((p) => {
               const price = annualBilling ? p.annual : p.monthly;
               const isCurrent = (hospital?.subscription_tier || "GROWTH") === p.id;

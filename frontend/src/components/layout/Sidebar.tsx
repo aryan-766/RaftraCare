@@ -239,13 +239,6 @@ export function Sidebar({
           icon: Tags,
           allowedRoles: ["SUPER_ADMIN", "HOSPITAL_ADMIN", "ACCOUNTANT"],
         },
-        {
-          title: "SaaS Plans & Billing",
-          href: "/plans",
-          icon: Sparkles,
-          allowedRoles: ["SUPER_ADMIN", "HOSPITAL_ADMIN", "ACCOUNTANT"],
-          badge: "Active",
-        },
       ],
     },
     {
@@ -331,11 +324,10 @@ export function Sidebar({
       section: "ADMIN",
       items: [
         {
-          title: "SaaS Multi-Tenancy",
-          href: "/plans",
-          icon: Sparkles,
+          title: "Hospital Settings",
+          href: "/admin/settings",
+          icon: Sliders,
           allowedRoles: ["SUPER_ADMIN", "HOSPITAL_ADMIN"],
-          badge: "Pro",
         },
         {
           title: "Users & Roles",
@@ -344,15 +336,16 @@ export function Sidebar({
           allowedRoles: ["SUPER_ADMIN", "HOSPITAL_ADMIN"],
         },
         {
+          title: "Billing & Subscription",
+          href: "/settings/billing",
+          icon: Sparkles,
+          allowedRoles: ["SUPER_ADMIN", "HOSPITAL_ADMIN"],
+          badge: "SaaS",
+        },
+        {
           title: "Audit Logs",
           href: "/admin/audit",
           icon: FileSpreadsheet,
-          allowedRoles: ["SUPER_ADMIN", "HOSPITAL_ADMIN"],
-        },
-        {
-          title: "Hospital Settings",
-          href: "/admin/settings",
-          icon: Sliders,
           allowedRoles: ["SUPER_ADMIN", "HOSPITAL_ADMIN"],
         },
       ],
@@ -402,7 +395,7 @@ export function Sidebar({
 
               {visibleItems.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-                const Icon = item.icon;
+                const Icon = item.icon as any;
 
                 return (
                   <a

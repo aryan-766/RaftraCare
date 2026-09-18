@@ -29,7 +29,7 @@ def gen_uuid():
 class Organization(Base):
     __tablename__ = "organizations"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=gen_uuid)
+    id: Mapped[str] = mapped_column(sa.String(36), primary_key=True, default=gen_uuid)
     name: Mapped[str] = mapped_column(sa.String(255), nullable=False)
     slug: Mapped[str] = mapped_column(sa.String(100), unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(sa.Boolean, default=True)
@@ -731,6 +731,7 @@ class Payment(Base):
     hospital_id: Mapped[str] = mapped_column(sa.String(36), sa.ForeignKey("hospitals.id", ondelete="CASCADE"), nullable=False)
     invoice_id: Mapped[str] = mapped_column(sa.String(36), sa.ForeignKey("invoices.id", ondelete="CASCADE"), nullable=False)
     amount: Mapped[float] = mapped_column(sa.Float, nullable=False)
+    refunded_amount: Mapped[float] = mapped_column(sa.Float, default=0.0)
     method: Mapped[PaymentMethod] = mapped_column(sa.Enum(PaymentMethod), default=PaymentMethod.CASH)
     status: Mapped[PaymentStatus] = mapped_column(sa.Enum(PaymentStatus), default=PaymentStatus.PENDING)
     razorpay_order_id: Mapped[Optional[str]] = mapped_column(sa.String(100), unique=True)
@@ -742,10 +743,43 @@ class Payment(Base):
     updated_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
 
     invoice: Mapped["Invoice"] = relationship(back_populates="payments")
+    refunds: Mapped[List["PaymentRefund"]] = relationship(back_populates="payment")
 
     __table_args__ = (
         sa.Index("ix_payments_hospital_id", "hospital_id"),
         sa.Index("ix_payments_invoice_id", "invoice_id"),
+    )
+
+
+class PaymentRefund(Base):
+    __tablename__ = "payment_refunds"
+
+    id: Mapped[str] = mapped_column(sa.String(36), primary_key=True, default=gen_uuid)
+    hospital_id: Mapped[str] = mapped_column(sa.String(36), sa.ForeignKey("hospitals.id", ondelete="CASCADE"), nullable=False)
+    payment_id: Mapped[str] = mapped_column(sa.String(36), sa.ForeignKey("payments.id", ondelete="CASCADE"), nullable=False)
+    amount: Mapped[float] = mapped_column(sa.Float, nullable=False)
+    reason: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    processed_by_user_id: Mapped[str] = mapped_column(sa.String(36), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True), default=datetime.utcnow)
+
+    payment: Mapped["Payment"] = relationship(back_populates="refunds")
+
+    __table_args__ = (
+        sa.Index("ix_payment_refunds_hospital_id", "hospital_id"),
+        sa.Index("ix_payment_refunds_payment_id", "payment_id"),
+    )
+
+
+class ProcessedWebhookEvent(Base):
+    __tablename__ = "processed_webhook_events"
+
+    id: Mapped[str] = mapped_column(sa.String(36), primary_key=True, default=gen_uuid)
+    event_id: Mapped[str] = mapped_column(sa.String(150), unique=True, nullable=False)
+    event_type: Mapped[str] = mapped_column(sa.String(100), nullable=False)
+    processed_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True), default=datetime.utcnow)
+
+    __table_args__ = (
+        sa.Index("ix_processed_webhooks_event_id", "event_id"),
     )
 
 

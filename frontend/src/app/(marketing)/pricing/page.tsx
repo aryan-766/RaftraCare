@@ -24,6 +24,32 @@ export default function PricingPage() {
 
   const plans = [
     {
+      id: "FREE_TRIAL",
+      name: "Free Version",
+      subtitle: "2-Day full operations trial",
+      monthlyPrice: 0,
+      annualPrice: 0,
+      badge: "Free 48h Trial",
+      popular: false,
+      beds: "Up to 50 Beds",
+      branches: "1 Facility Location",
+      desc: "Full operational access to test OPD, IPD, lab, pharmacy, and staff invitations with zero commitment.",
+      features: [
+        "48 Hours Full Operations Access",
+        "1 Hospital Facility Location",
+        "Up to 50 Hospital Beds with Live Map",
+        "Front Desk Registration & Token Queue",
+        "Single-Screen OPD Doctor Workstation",
+        "Digital Rx & e-Prescriptions",
+        "Pharmacy & Lab Integration",
+        "Invite Staff & Assign RBAC Roles",
+        "No Credit Card Required",
+        "Instant 1-Click Activation",
+      ],
+      cta: "Start 2-Day Free Trial",
+      href: "/signup",
+    },
+    {
       id: "STARTER",
       name: "Starter Clinic",
       subtitle: "For day-care clinics & nursing homes",
@@ -169,7 +195,7 @@ export default function PricingPage() {
       </div>
 
       {/* 2. Tier Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
         {plans.map((p) => {
           const price = annual ? p.annualPrice : p.monthlyPrice;
           return (

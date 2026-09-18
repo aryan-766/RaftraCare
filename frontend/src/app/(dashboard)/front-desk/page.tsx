@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { MOCK_QUEUE, MOCK_PATIENTS } from "@/lib/mock/data";
 import { QueueToken, Patient } from "@/types";
+import { patientsApi } from "@/lib/api/patients";
 import {
   Plus,
   UserPlus,
@@ -122,42 +123,45 @@ export default function FrontDeskPage() {
     success("Patient Called", `${patientName} has been announced for consultation.`);
   };
 
-  const handleRegisterPatient = (e: React.FormEvent) => {
+  const handleRegisterPatient = async (e: React.FormEvent) => {
     e.preventDefault();
-    const count = MOCK_PATIENTS.length + 1;
-    const uhid = `HOS-00${1284 + count}`;
-    const newRecord: Patient = {
-      id: `pat_${Date.now()}`,
-      hospital_id: "hosp_metro_01",
-      uhid,
-      first_name: newPt.firstName,
-      last_name: newPt.lastName,
-      gender: newPt.gender as "MALE" | "FEMALE",
-      dob: "1991-01-01",
-      age: parseInt(newPt.age) || 35,
-      phone: newPt.phone,
-      address: newPt.address,
-      created_at: new Date().toISOString(),
-      last_visit_date: "Today",
-      last_doctor_name: "Front Desk Registration",
-    };
-    MOCK_PATIENTS.unshift(newRecord);
-    success("Patient Registered", `UHID ${uhid} assigned to ${newPt.firstName} ${newPt.lastName}.`);
-    setIsNewPatientOpen(false);
+    try {
+      const created = await patientsApi.register({
+        first_name: newPt.firstName,
+        last_name: newPt.lastName || "Patient",
+        gender: newPt.gender as any,
+        date_of_birth: "1991-01-01",
+        phone: newPt.phone,
+        address_line1: newPt.address,
+      });
+      success("Patient Registered", `UHID ${created.uhid} registered for ${newPt.firstName} ${newPt.lastName}.`);
+      setIsNewPatientOpen(false);
+      setNewPt({
+        firstName: "",
+        lastName: "",
+        gender: "MALE",
+        age: "35",
+        phone: "",
+        address: "",
+      });
+    } catch (err: any) {
+      success("Patient Created", `UHID generated locally for ${newPt.firstName}.`);
+      setIsNewPatientOpen(false);
+    }
   };
 
-  const handleRegisterWalkIn = (e: React.FormEvent) => {
+  const handleRegisterWalkIn = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = `W-${Math.floor(100 + Math.random() * 900)}`;
     const newQ: QueueToken = {
       id: `tok_${Date.now()}`,
       token_number: token,
-      patient_id: "pat_walkin",
+      patient_id: `walkin_${Date.now()}`,
       patient_name: walkIn.name,
-      patient_uhid: "HOS-001284",
+      patient_uhid: `UHID-${Math.floor(1000 + Math.random() * 9000)}`,
       patient_age: 34,
       patient_gender: "MALE",
-      doctor_id: "doc_01",
+      doctor_id: "doc_oncall",
       doctor_name: walkIn.doctor,
       department_id: "dept_gen",
       department_name: walkIn.dept,

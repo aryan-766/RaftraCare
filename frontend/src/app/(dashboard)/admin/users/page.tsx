@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Tabs } from "@/components/ui/Tabs";
 import { useToast } from "@/components/ui/Toast";
-import { Shield, UserPlus, Check, X, Users, Lock } from "lucide-react";
+import { Shield, UserPlus, Check, X, Users, Lock, Mail, Building2 } from "lucide-react";
+import { InviteStaffModal } from "@/components/modals/InviteStaffModal";
 
 interface StaffUser {
   id: string;
@@ -18,27 +19,29 @@ interface StaffUser {
   status: "ACTIVE" | "INACTIVE";
 }
 
+const INITIAL_STAFF_LIST: StaffUser[] = [
+  { id: "s1", name: "Dr. Arvind Srivastava", email: "admin@metrogeneral.org", role: "HOSPITAL_ADMIN", department: "Administration", status: "ACTIVE" },
+  { id: "s2", name: "Dr. Rajesh Sharma", email: "dr.sharma@metrogeneral.org", role: "DOCTOR", department: "Cardiology", status: "ACTIVE" },
+  { id: "s3", name: "Priya Verma", email: "priya.frontdesk@metrogeneral.org", role: "RECEPTIONIST", department: "Front Desk", status: "ACTIVE" },
+  { id: "s4", name: "Ananya Iyer", email: "ananya.nurse@metrogeneral.org", role: "NURSE", department: "Ward A", status: "ACTIVE" },
+  { id: "s5", name: "Sunil Nair", email: "sunil.pharm@metrogeneral.org", role: "PHARMACIST", department: "Pharmacy", status: "ACTIVE" },
+  { id: "s6", name: "Manoj Patel", email: "manoj.lab@metrogeneral.org", role: "LAB_TECHNICIAN", department: "Laboratory", status: "ACTIVE" },
+  { id: "s7", name: "Deepak Jain", email: "deepak.accounts@metrogeneral.org", role: "ACCOUNTANT", department: "Accounts", status: "ACTIVE" },
+];
+
 export default function UsersAndRBACPage() {
   const [activeTab, setActiveTab] = useState("matrix");
+  const [staff, setStaff] = useState<StaffUser[]>(INITIAL_STAFF_LIST);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const { success } = useToast();
 
   const tabs = [
     { id: "matrix", label: "RBAC Permission Matrix" },
-    { id: "staff", label: "Staff Directory (48)" },
+    { id: "staff", label: `Staff Directory (${staff.length})` },
     { id: "roles", label: "Defined Roles (9)" },
   ];
 
-  const staffList: StaffUser[] = [
-    { id: "s1", name: "Dr. Arvind Srivastava", email: "admin@metrogeneral.org", role: "HOSPITAL_ADMIN", department: "Administration", status: "ACTIVE" },
-    { id: "s2", name: "Dr. Rajesh Sharma", email: "dr.sharma@metrogeneral.org", role: "DOCTOR", department: "Cardiology", status: "ACTIVE" },
-    { id: "s3", name: "Priya Verma", email: "priya.frontdesk@metrogeneral.org", role: "RECEPTIONIST", department: "Front Desk", status: "ACTIVE" },
-    { id: "s4", name: "Ananya Iyer", email: "ananya.nurse@metrogeneral.org", role: "NURSE", department: "Ward A", status: "ACTIVE" },
-    { id: "s5", name: "Sunil Nair", email: "sunil.pharm@metrogeneral.org", role: "PHARMACIST", department: "Pharmacy", status: "ACTIVE" },
-    { id: "s6", name: "Manoj Patel", email: "manoj.lab@metrogeneral.org", role: "LAB_TECHNICIAN", department: "Laboratory", status: "ACTIVE" },
-    { id: "s7", name: "Deepak Jain", email: "deepak.accounts@metrogeneral.org", role: "ACCOUNTANT", department: "Accounts", status: "ACTIVE" },
-  ];
-
-  // RBAC permissions matrix as specified in Section 30 of user prompt
+  // RBAC permissions matrix
   const rbacMatrix = [
     {
       resource: "Patients Directory",
@@ -97,13 +100,13 @@ export default function UsersAndRBACPage() {
             <Lock className="w-5 h-5 text-primary" /> Users & Role-Based Access Control (RBAC)
           </h1>
           <p className="text-xs text-foreground-muted dark:text-foreground-mutedDark mt-0.5">
-            Role hierarchy, fine-grained resource permissions, and medical data confidentiality
+            Manage hospital staff, send invitations with specific roles, and govern medical access
           </p>
         </div>
 
         <Button
           size="sm"
-          onClick={() => success("Invite Staff", "Staff invitation modal opened.")}
+          onClick={() => setInviteModalOpen(true)}
           leftIcon={<UserPlus className="w-4 h-4" />}
         >
           + Invite Employee
@@ -186,17 +189,67 @@ export default function UsersAndRBACPage() {
       {/* Staff Directory */}
       {activeTab === "staff" && (
         <Table
-          data={staffList}
+          data={staff}
           columns={[
-            { header: "Staff Member", render: (s) => <div><div className="font-bold">{s.name}</div><div className="text-foreground-muted">{s.email}</div></div> },
-            { header: "Assigned Role", render: (s) => <span className="font-mono font-bold text-primary">{s.role}</span> },
+            {
+              header: "Staff Member",
+              render: (s) => (
+                <div>
+                  <div className="font-bold text-foreground">{s.name}</div>
+                  <div className="text-foreground-muted text-[11px]">{s.email}</div>
+                </div>
+              ),
+            },
+            {
+              header: "Assigned Role",
+              render: (s) => (
+                <span className="font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded text-[11px]">
+                  {s.role}
+                </span>
+              ),
+            },
             { header: "Department", accessorKey: "department" },
-            { header: "Status", render: (s) => <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">{s.status}</span> },
+            {
+              header: "Status",
+              render: (s) => (
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">
+                  {s.status}
+                </span>
+              ),
+            },
           ]}
           keyExtractor={(s) => s.id}
           pageSize={10}
         />
       )}
+
+      {/* Roles Tab */}
+      {activeTab === "roles" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          {[
+            { role: "HOSPITAL_ADMIN", title: "Hospital Administrator", desc: "Full administrative access to all hospital branches, staff roster, and subscription billing." },
+            { role: "DOCTOR", title: "Clinician / Doctor", desc: "Access to OPD consultation, single-screen EMR, e-Prescriptions, and diagnostic ordering." },
+            { role: "NURSE", title: "Ward Staff Nurse", desc: "Access to IPD ward bed map, 4-hourly vitals charting, nursing task checklist, and drug administration." },
+            { role: "RECEPTIONIST", title: "Front Desk Staff", desc: "Patient registration, token generation, queue display caller, and doctor appointments." },
+            { role: "PHARMACIST", title: "Pharmacist", desc: "Prescription dispensing queue, POS billing, stock inventory, and batch expiry tracking." },
+            { role: "LAB_TECHNICIAN", title: "Laboratory Tech", desc: "Access to pathology sample accessioning, analyzer interface, and report validation." },
+            { role: "ACCOUNTANT", title: "Cashier / Accountant", desc: "Consolidated bill invoicing, cashless insurance pre-authorizations, and daily settlement." },
+          ].map((r) => (
+            <Card key={r.role} className="p-4 space-y-2">
+              <div className="font-mono font-bold text-primary text-xs">{r.role}</div>
+              <div className="font-bold text-sm text-foreground">{r.title}</div>
+              <p className="text-foreground-muted text-xs leading-relaxed">{r.desc}</p>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Invite Staff Modal */}
+      <InviteStaffModal
+        isOpen={inviteModalOpen}
+        onClose={() => setInviteModalOpen(false)}
+        onStaffAdded={(newMember) => setStaff([newMember, ...staff])}
+      />
     </div>
   );
 }

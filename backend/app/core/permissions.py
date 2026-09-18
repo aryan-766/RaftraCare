@@ -7,13 +7,16 @@ Permission = str
 
 # All available permissions
 PERMISSIONS = {
-    # Tenant / Org
+    # Tenant / Org / Facilities
     "hospitals:read",
+    "hospitals:create",
     "hospitals:update",
     "hospitals:billing",
+    "subscriptions:manage",
     # Staff
     "staff:read",
     "staff:write",
+    "staff:manage",
     "staff:delete",
     # Patients & EMR
     "patients:read",
@@ -50,6 +53,7 @@ PERMISSIONS = {
     "invoices:read",
     "invoices:write",
     "payments:process",
+    "payments:refund",
     "reports:financial",
     # Insurance
     "insurance:read",
@@ -62,23 +66,23 @@ PERMISSIONS = {
 
 # Role → Permission Matrix
 ROLE_PERMISSIONS: Dict[UserRole, Set[str]] = {
-    UserRole.SUPER_ADMIN: PERMISSIONS,  # Full access
+    UserRole.SUPER_ADMIN: PERMISSIONS,  # Full access across all tenants
 
     UserRole.HOSPITAL_ADMIN: {
-        "hospitals:read", "hospitals:update", "hospitals:billing",
-        "staff:read", "staff:write", "staff:delete",
+        "hospitals:read", "hospitals:update", "hospitals:billing", "subscriptions:manage",
+        "staff:read", "staff:write", "staff:manage", "staff:delete",
         "patients:read", "patients:write",
         "emr:read",
         "appointments:read", "appointments:write", "appointments:cancel",
         "queue:read", "queue:manage",
         "prescriptions:read",
-        "pharmacy:read",
+        "pharmacy:read", "pharmacy:inventory",
         "lab:read",
         "radiology:read",
         "wards:read", "wards:manage",
         "admissions:read",
         "invoices:read", "invoices:write",
-        "payments:process",
+        "payments:process", "payments:refund",
         "reports:financial",
         "insurance:read", "insurance:write",
         "audit:read",

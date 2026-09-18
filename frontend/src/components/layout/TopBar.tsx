@@ -31,22 +31,13 @@ export function TopBar({
   onOpenCommand: () => void;
   onOpenQuickAction: (action: string) => void;
 }) {
-  const { user, hospital, availableHospitals, switchHospital, switchRole, logout } = useAuth();
+  const { user, hospital, availableHospitals, switchHospital, logout } = useAuth();
   const { theme, setTheme } = useTheme();
-  const [showRoleMenu, setShowRoleMenu] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showQuickMenu, setShowQuickMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showFacilityMenu, setShowFacilityMenu] = useState(false);
   const [addFacilityOpen, setAddFacilityOpen] = useState(false);
-
-  const roles: { role: UserRole; label: string }[] = [
-    { role: "HOSPITAL_ADMIN", label: "Hospital Admin (Full)" },
-    { role: "RECEPTIONIST", label: "Receptionist / Front Desk" },
-    { role: "DOCTOR", label: "Doctor / Specialist" },
-    { role: "NURSE", label: "Ward Staff Nurse" },
-    { role: "PHARMACIST", label: "Chief Pharmacist" },
-    { role: "ACCOUNTANT", label: "Billing & Accounts" },
-  ];
 
   // Group hospitals by organization for multi-tenancy display
   const orgMap: Record<string, typeof availableHospitals> = {};
@@ -299,10 +290,10 @@ export function TopBar({
             </button>
           </div>
 
-          {/* User profile & Role Switcher */}
+          {/* User profile Menu */}
           <div className="relative">
             <button
-              onClick={() => setShowRoleMenu(!showRoleMenu)}
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
               className="flex items-center gap-1.5 sm:gap-2 pl-2 pr-1.5 py-1 rounded-btn hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-border dark:hover:border-border-dark"
             >
               <div className="w-7 h-7 rounded-full bg-deep text-white font-bold text-xs flex items-center justify-center">
@@ -313,48 +304,48 @@ export function TopBar({
                   {user?.first_name} {user?.last_name}
                 </div>
                 <div className="text-[10px] font-medium text-primary mt-0.5">
-                  {user?.role.replace(/_/g, " ")}
+                  {user?.role ? user.role.replace(/_/g, " ") : "Operator"}
                 </div>
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-foreground-muted dark:text-foreground-mutedDark ml-0.5" />
             </button>
 
-            {showRoleMenu && (
+            {showProfileMenu && (
               <div
                 className="absolute right-0 mt-1.5 w-64 bg-white dark:bg-surface-dark border border-border dark:border-border-dark rounded-card shadow-dropdown p-2 z-40 text-xs animate-in fade-in zoom-in-95"
-                onClick={() => setShowRoleMenu(false)}
+                onClick={() => setShowProfileMenu(false)}
               >
-                <div className="px-2 py-1.5 text-[11px] font-semibold text-foreground-muted dark:text-foreground-mutedDark uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-1.5 mb-1.5">
-                  <UserCheck className="w-3.5 h-3.5 text-primary" />
-                  Switch Demo Role
-                </div>
-                <div className="space-y-0.5 mb-2">
-                  {roles.map((r) => (
-                    <button
-                      key={r.role}
-                      onClick={() => switchRole(r.role)}
-                      className={`w-full text-left px-2 py-1.5 rounded transition-colors flex items-center justify-between ${
-                        user?.role === r.role
-                          ? "bg-blue-50 dark:bg-blue-950/60 font-semibold text-primary"
-                          : "hover:bg-slate-50 dark:hover:bg-slate-800 text-foreground dark:text-foreground-dark"
-                      }`}
-                    >
-                      <span>{r.label}</span>
-                      {user?.role === r.role && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                      )}
-                    </button>
-                  ))}
+                <div className="px-2 py-2 border-b border-border dark:border-border-dark mb-1.5">
+                  <div className="font-bold text-foreground dark:text-foreground-dark">
+                    {user?.first_name} {user?.last_name}
+                  </div>
+                  <div className="text-[11px] text-foreground-muted truncate">
+                    {user?.email}
+                  </div>
+                  <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 dark:bg-blue-950 text-primary border border-blue-200 dark:border-blue-900">
+                    <UserCheck className="w-3 h-3" />
+                    <span>{user?.role?.replace(/_/g, " ")}</span>
+                  </div>
                 </div>
 
-                <div className="border-t border-border dark:border-border-dark pt-1.5 space-y-1">
+                <div className="space-y-1">
                   <Link
-                    href="/plans"
+                    href="/admin/settings"
                     className="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-800 text-foreground font-medium flex items-center gap-2 text-xs"
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    SaaS Plans & Multi-Tenancy
+                    <Building2 className="w-3.5 h-3.5 text-slate-500" />
+                    Hospital Settings
                   </Link>
+                  <Link
+                    href="/settings/billing"
+                    className="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-800 text-foreground font-medium flex items-center gap-2 text-xs"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-primary" />
+                    SaaS Billing & Quotas
+                  </Link>
+                </div>
+
+                <div className="border-t border-border dark:border-border-dark pt-1.5 mt-1.5">
                   <button
                     onClick={logout}
                     className="w-full text-left px-2 py-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 font-bold flex items-center gap-2 transition-colors text-xs"

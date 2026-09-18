@@ -1,17 +1,18 @@
 """
-Auth Service — Hospital onboarding, login, and token lifecycle management
+Auth Service — Hospital onboarding, login, facility switching, and token lifecycle management
 """
-from datetime import datetime, timedelta, timezone, date as date_type
-from typing import Optional
+from datetime import datetime, timedelta, timezone
+from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, update
 from app.database.models import (
     Hospital, User, HospitalStaff, Department, HospitalSubscription,
     SubscriptionPlan, RefreshToken
 )
 from app.core.enums import UserRole, SubscriptionTier, SubscriptionStatus
-from app.core.exceptions import ConflictError, UnauthorizedError, NotFoundError
+from app.core.exceptions import ConflictError, UnauthorizedError, NotFoundError, ForbiddenError
 from app.core.logging import logger
+from app.core.config import settings
 from app.modules.auth.security import (
     hash_password, verify_password,
     create_access_token, create_refresh_token, decode_token, hash_token
@@ -24,7 +25,7 @@ class AuthService:
     async def register_hospital(
         self, db: AsyncSession, data: RegisterHospitalRequest
     ) -> dict:
-        # 1. Check slug uniqueness
+        # 1. Check slug & code uniqueness
         existing = await db.execute(
             select(Hospital).where(
                 or_(
@@ -41,9 +42,9 @@ class AuthService:
             select(User).where(User.email == data.admin_email.lower())
         )
         if existing_user.scalar_one_or_none():
-            raise ConflictError("An admin account with this email already exists")
+            raise ConflictError("An administrator account with this email already exists")
 
-        # 3. Create Hospital
+        # 3. Create Hospital Facility
         hospital = Hospital(
             name=data.hospital_name,
             slug=data.hospital_slug.lower(),
@@ -57,15 +58,18 @@ class AuthService:
             postal_code=data.postal_code,
             country=data.country,
             currency=data.currency,
+            is_active=True,
         )
         db.add(hospital)
         await db.flush()  # get hospital.id
 
-        # 4. Create default departments
+        # 4. Create default clinical departments
         defaults = [
             ("Outpatient Department", "OPD"),
             ("General Medicine", "GEN"),
             ("Emergency & Trauma", "EMR"),
+            ("Diagnostic Laboratory", "LAB"),
+            ("Inpatient Pharmacy", "PHARM"),
         ]
         for dept_name, dept_code in defaults:
             db.add(Department(
@@ -74,13 +78,14 @@ class AuthService:
                 code=dept_code,
             ))
 
-        # 5. Create admin User
+        # 5. Create admin User with bcrypt password hashing
         user = User(
             email=data.admin_email.lower(),
             password_hash=hash_password(data.admin_password),
             first_name=data.admin_first_name,
             last_name=data.admin_last_name,
             phone=data.admin_phone,
+            is_active=True,
             is_email_verified=True,
         )
         db.add(user)
@@ -91,7 +96,8 @@ class AuthService:
             user_id=user.id,
             hospital_id=hospital.id,
             role=UserRole.HOSPITAL_ADMIN,
-            designation="Hospital Administrator",
+            designation="Hospital Director / Administrator",
+            is_active=True,
         )
         db.add(staff)
 
@@ -106,10 +112,10 @@ class AuthService:
                 tier=SubscriptionTier.FREE_TRIAL,
                 price_monthly=0.0,
                 price_yearly=0.0,
-                max_doctors=5,
-                max_staff=20,
-                max_beds=25,
-                features=["OPD", "EMR", "BILLING", "PHARMACY", "LAB"],
+                max_doctors=10,
+                max_staff=30,
+                max_beds=50,
+                features=["OPD", "EMR", "BILLING", "PHARMACY", "LAB", "WARDS"],
             )
             db.add(free_plan)
             await db.flush()
@@ -125,12 +131,12 @@ class AuthService:
 
         await db.flush()
 
-        # 8. Generate tokens
+        # 8. Generate real JWT tokens
         tokens = await self._generate_tokens(db, user, staff, hospital)
         await db.commit()
 
         logger.info(
-            "Hospital registered",
+            "Hospital registered successfully",
             hospital_id=hospital.id,
             hospital_slug=hospital.slug,
             admin_email=user.email,
@@ -161,12 +167,13 @@ class AuthService:
         if not user or not verify_password(data.password, user.password_hash):
             raise UnauthorizedError("Invalid email or password")
 
-        # 2. Resolve hospital context
+        # 2. Resolve hospital membership context
         staff_query = (
             select(HospitalStaff, Hospital)
             .join(Hospital, HospitalStaff.hospital_id == Hospital.id)
             .where(HospitalStaff.user_id == user.id)
             .where(HospitalStaff.is_active == True)
+            .where(Hospital.is_active == True)
         )
         if data.hospital_slug:
             staff_query = staff_query.where(Hospital.slug == data.hospital_slug.lower())
@@ -180,14 +187,14 @@ class AuthService:
         role = active_staff.role if active_staff else UserRole.PATIENT
         hospital_id = active_hospital.id if active_hospital else None
 
-        # 3. Update last login
+        # 3. Update last login timestamp
         user.last_login_at = datetime.now(timezone.utc)
 
-        # 4. Generate tokens
+        # 4. Generate access & refresh tokens
         tokens = await self._generate_tokens(db, user, active_staff, active_hospital, ip, user_agent)
         await db.commit()
 
-        logger.info("User logged in", user_id=user.id, role=role, hospital_id=hospital_id)
+        logger.info("User authenticated", user_id=user.id, role=role.value, hospital_id=hospital_id)
 
         return {
             "user": {
@@ -202,6 +209,117 @@ class AuthService:
             },
             "tokens": tokens,
         }
+
+    async def get_user_facilities(self, db: AsyncSession, user_id: str, is_super_admin: bool = False) -> List[dict]:
+        """Fetch all hospitals/facilities the user is authorized to access"""
+        if is_super_admin:
+            result = await db.execute(
+                select(Hospital).where(Hospital.is_active == True).order_by(Hospital.name)
+            )
+            hospitals = result.scalars().all()
+            return [
+                {
+                    "id": h.id,
+                    "name": h.name,
+                    "slug": h.slug,
+                    "code": h.code,
+                    "role": UserRole.SUPER_ADMIN,
+                    "phone": h.phone,
+                    "city": h.city,
+                    "state": h.state,
+                    "is_active": h.is_active,
+                }
+                for h in hospitals
+            ]
+
+        result = await db.execute(
+            select(HospitalStaff, Hospital)
+            .join(Hospital, HospitalStaff.hospital_id == Hospital.id)
+            .where(HospitalStaff.user_id == user_id)
+            .where(HospitalStaff.is_active == True)
+            .where(Hospital.is_active == True)
+        )
+        rows = result.all()
+        return [
+            {
+                "id": hosp.id,
+                "name": hosp.name,
+                "slug": hosp.slug,
+                "code": hosp.code,
+                "role": staff.role,
+                "phone": hosp.phone,
+                "city": hosp.city,
+                "state": hosp.state,
+                "is_active": hosp.is_active,
+            }
+            for staff, hosp in rows
+        ]
+
+    async def switch_hospital(
+        self, db: AsyncSession, user_id: str, target_hospital_id: str,
+        ip: Optional[str] = None, user_agent: Optional[str] = None
+    ) -> dict:
+        """
+        Validate and switch operational hospital context.
+        Verifies membership before issuing new tokens.
+        """
+        user_result = await db.execute(
+            select(User).where(User.id == user_id, User.is_active == True)
+        )
+        user = user_result.scalar_one_or_none()
+        if not user:
+            raise UnauthorizedError("User not found")
+
+        hosp_result = await db.execute(
+            select(Hospital).where(Hospital.id == target_hospital_id, Hospital.is_active == True)
+        )
+        hospital = hosp_result.scalar_one_or_none()
+        if not hospital:
+            raise NotFoundError("Target hospital facility not found or inactive")
+
+        staff_result = await db.execute(
+            select(HospitalStaff).where(
+                HospitalStaff.user_id == user.id,
+                HospitalStaff.hospital_id == target_hospital_id,
+                HospitalStaff.is_active == True,
+            )
+        )
+        staff = staff_result.scalar_one_or_none()
+        if not staff:
+            raise ForbiddenError("You do not have active authorization for this facility")
+
+        tokens = await self._generate_tokens(db, user, staff, hospital, ip, user_agent)
+        await db.commit()
+
+        logger.info("Switched facility context", user_id=user.id, hospital_id=target_hospital_id)
+
+        return {
+            "hospital": {
+                "id": hospital.id,
+                "name": hospital.name,
+                "slug": hospital.slug,
+                "code": hospital.code,
+            },
+            "role": staff.role,
+            "tokens": tokens,
+        }
+
+    async def logout(self, db: AsyncSession, user_id: str, refresh_token_str: Optional[str] = None):
+        """Revoke refresh token(s) upon logout"""
+        if refresh_token_str:
+            token_hash = hash_token(refresh_token_str)
+            await db.execute(
+                update(RefreshToken)
+                .where(RefreshToken.token_hash == token_hash)
+                .values(revoked_at=datetime.now(timezone.utc))
+            )
+        else:
+            await db.execute(
+                update(RefreshToken)
+                .where(RefreshToken.user_id == user_id, RefreshToken.revoked_at == None)
+                .values(revoked_at=datetime.now(timezone.utc))
+            )
+        await db.commit()
 
     async def refresh_access_token(self, db: AsyncSession, refresh_token_str: str) -> dict:
         payload = decode_token(refresh_token_str)
@@ -222,15 +340,26 @@ class AuthService:
         # Revoke old token (rotation)
         stored.revoked_at = datetime.now(timezone.utc)
 
-        # Get user + active staff
+        # Get user + primary active staff record
         user_result = await db.execute(
-            select(User).where(User.id == stored.user_id)
+            select(User).where(User.id == stored.user_id, User.is_active == True)
         )
         user = user_result.scalar_one_or_none()
         if not user:
-            raise UnauthorizedError("User not found")
+            raise UnauthorizedError("User not found or deactivated")
 
-        tokens = await self._generate_tokens(db, user, None, None)
+        staff_result = await db.execute(
+            select(HospitalStaff, Hospital)
+            .join(Hospital, HospitalStaff.hospital_id == Hospital.id)
+            .where(HospitalStaff.user_id == user.id)
+            .where(HospitalStaff.is_active == True)
+            .where(Hospital.is_active == True)
+        )
+        row = staff_result.first()
+        staff = row[0] if row else None
+        hospital = row[1] if row else None
+
+        tokens = await self._generate_tokens(db, user, staff, hospital)
         await db.commit()
         return tokens
 
@@ -254,7 +383,7 @@ class AuthService:
         refresh_token = create_refresh_token(user.id)
         token_hash = hash_token(refresh_token)
 
-        expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+        expires_at = datetime.now(timezone.utc) + timedelta(days=settings.jwt_refresh_token_expire_days)
         db.add(RefreshToken(
             user_id=user.id,
             token_hash=token_hash,
@@ -267,7 +396,7 @@ class AuthService:
             "access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "Bearer",
-            "expires_in": "7d",
+            "expires_in": f"{settings.jwt_access_token_expire_minutes}m",
         }
 
 

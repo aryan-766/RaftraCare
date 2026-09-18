@@ -17,7 +17,7 @@ export default function HospitalSettingsPage() {
     name: hospital?.name || "Metro General Hospital",
     code: hospital?.code || "MGH",
     phone: hospital?.phone || "+91 98765 43210",
-    email: hospital?.email || "admin@metrogeneral.org",
+    email: hospital?.email || "admin@hospital.org",
     city: hospital?.city || "Gurugram",
     state: hospital?.state || "Haryana",
     pincode: hospital?.pincode || "122002",
